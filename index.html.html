@@ -1,0 +1,1823 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>BJJ PATH — Sistema de Progressão</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap');
+
+:root {
+  --bg: #060608;
+  --bg1: #0e0e14;
+  --bg2: #14141c;
+  --bg3: #1c1c28;
+  --bg4: #222230;
+  --border: #1e1e2e;
+  --border2: #2c2c42;
+  --text: #ececf4;
+  --text-dim: #8888aa;
+  --text-muted: #44445a;
+  --blue: #4070ff;
+  --blue-d: rgba(64,112,255,0.18);
+  --blue-g: rgba(64,112,255,0.35);
+  --orange: #ff6020;
+  --orange-d: rgba(255,96,32,0.15);
+  --green: #00cc7a;
+  --green-d: rgba(0,204,122,0.12);
+  --red: #ff3355;
+  --red-d: rgba(255,51,85,0.12);
+  --gold: #ffbe00;
+  --gold-d: rgba(255,190,0,0.12);
+  --purple: #b060ff;
+  --purple-d: rgba(176,96,255,0.12);
+  --cyan: #00c8e0;
+  --cyan-d: rgba(0,200,224,0.12);
+}
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{min-height:100vh;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;line-height:1.6;overflow-x:hidden}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* HEADER */
+#hdr{padding:20px 16px 0;max-width:780px;margin:0 auto}
+#hdr h1{font-family:'Syne',sans-serif;font-size:clamp(24px,6vw,38px);font-weight:800;letter-spacing:-1px;
+  background:linear-gradient(120deg,#fff 0%,var(--blue) 55%,var(--purple) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.1}
+#hdr p{color:var(--text-dim);font-size:12px;margin-top:5px;line-height:1.5}
+.hdr-pills{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}
+.pill{display:flex;align-items:center;gap:5px;background:var(--bg2);border:1px solid var(--border2);
+  border-radius:20px;padding:4px 12px;font-size:11px;font-family:'Space Mono',monospace;white-space:nowrap}
+.pill-dot{width:6px;height:6px;border-radius:50%}
+
+/* OVERALL PROGRESS */
+#ovr{max-width:780px;margin:14px auto 0;padding:0 16px}
+.ovr-card{background:var(--bg1);border:1px solid var(--border);border-radius:12px;padding:16px 18px;position:relative;overflow:hidden}
+.ovr-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--blue),var(--purple),var(--orange))}
+.ovr-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.ovr-lbl{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text-muted);font-weight:600}
+.ovr-pct{font-family:'Space Mono',monospace;font-size:22px;font-weight:700;color:var(--blue)}
+.ovr-bar{height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-bottom:10px}
+.ovr-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--blue),var(--purple));transition:width .7s ease}
+.ovr-nodes{display:flex;gap:3px}
+.ovr-node{flex:1;height:3px;border-radius:2px;background:var(--bg3);transition:background .3s}
+.ovr-node.done{background:var(--green)}.ovr-node.active{background:var(--blue)}.ovr-node.locked{background:var(--bg3)}
+
+/* FOCUS CARD */
+#focus-card{max-width:780px;margin:10px auto 0;padding:0 16px}
+.fc-inner{background:linear-gradient(135deg,rgba(64,112,255,0.12),rgba(176,96,255,0.08));
+  border:1px solid var(--blue);border-radius:10px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start}
+.fc-icon{font-size:24px;flex-shrink:0;margin-top:2px}
+.fc-body{}
+.fc-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--blue);font-weight:700;margin-bottom:3px}
+.fc-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700}
+.fc-sub{font-size:12px;color:var(--text-dim);margin-top:3px}
+
+/* PATH */
+#path{max-width:780px;margin:16px auto 0;padding:0 16px 80px;display:flex;flex-direction:column;gap:0}
+
+/* NODE */
+.node{position:relative;animation:fadeUp .35s ease both}
+.node:nth-child(1){animation-delay:.04s}.node:nth-child(2){animation-delay:.08s}
+.node:nth-child(3){animation-delay:.12s}.node:nth-child(4){animation-delay:.16s}
+.node:nth-child(5){animation-delay:.2s}.node:nth-child(6){animation-delay:.24s}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+.node:not(:last-child)::after{content:'';position:absolute;left:27px;bottom:-20px;
+  width:2px;height:20px;background:var(--border);z-index:0}
+.node.done-node:not(:last-child)::after{background:var(--green)}
+.node.active-node:not(:last-child)::after{background:var(--blue)}
+
+.nwrap{display:flex;gap:11px;align-items:flex-start;padding:10px 0}
+
+.nicon{width:42px;height:42px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;
+  justify-content:center;font-size:18px;border:2px solid;z-index:1;position:relative;transition:all .3s}
+.nicon.locked{background:var(--bg2);border-color:var(--border);filter:grayscale(1);opacity:.4}
+.nicon.active{background:var(--blue-d);border-color:var(--blue);box-shadow:0 0 16px var(--blue-g)}
+.nicon.done{background:var(--green-d);border-color:var(--green)}
+.nicon.mastered{background:var(--gold-d);border-color:var(--gold)}
+
+.ncard{flex:1;background:var(--bg1);border:1px solid var(--border);border-radius:11px;overflow:hidden;transition:all .3s}
+.ncard.locked{opacity:.38;pointer-events:none}
+.ncard.active{border-color:var(--blue)}
+.ncard.done{border-color:var(--green)}
+.ncard.mastered{border-color:var(--gold)}
+
+.nhdr{padding:13px 14px;cursor:pointer;user-select:none;display:flex;justify-content:space-between;
+  align-items:center;transition:background .2s;-webkit-user-select:none}
+.nhdr:hover,.nhdr:active{background:var(--bg2)}
+.nhl{flex:1;min-width:0}
+.nstep{font-family:'Space Mono',monospace;font-size:9px;color:var(--text-muted);letter-spacing:1px;margin-bottom:2px}
+.nname{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ncard.locked .nname{color:var(--text-muted)}
+.ntags{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap}
+.tag{font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
+  padding:2px 6px;border-radius:3px;border:1px solid;white-space:nowrap}
+.tag-pos{border-color:var(--blue);color:var(--blue);background:var(--blue-d)}
+.tag-back{border-color:var(--orange);color:var(--orange);background:var(--orange-d)}
+.tag-fin{border-color:var(--red);color:var(--red);background:var(--red-d)}
+.tag-sys{border-color:var(--purple);color:var(--purple);background:var(--purple-d)}
+.tag-sweep{border-color:var(--green);color:var(--green);background:var(--green-d)}
+.tag-key{border-color:var(--gold);color:var(--gold);background:var(--gold-d)}
+
+.nhr{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;margin-left:8px}
+.nsbadge{font-family:'Space Mono',monospace;font-size:9px;font-weight:700;padding:2px 7px;
+  border-radius:3px;letter-spacing:.5px;white-space:nowrap}
+.nsb-locked{background:var(--bg3);color:var(--text-muted)}
+.nsb-active{background:var(--blue-d);color:var(--blue);border:1px solid var(--blue)}
+.nsb-done{background:var(--green-d);color:var(--green);border:1px solid var(--green)}
+.nsb-mastered{background:var(--gold-d);color:var(--gold);border:1px solid var(--gold)}
+.ndots{display:flex;gap:2px}
+.ndot{width:7px;height:7px;border-radius:50%;background:var(--bg3)}
+.ndot.f{background:var(--blue)}.ndot.g{background:var(--green)}
+
+/* BODY */
+.nbody{display:none;border-top:1px solid var(--border)}
+.nbody.open{display:block}
+
+/* TABS */
+.ntabs{display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;border-bottom:1px solid var(--border);
+  scrollbar-width:none}-webkit-scrollbar{display:none}
+.ntab{flex-shrink:0;padding:10px 14px;cursor:pointer;font-size:11px;font-weight:600;
+  letter-spacing:.5px;text-transform:uppercase;color:var(--text-muted);
+  border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;user-select:none;-webkit-user-select:none}
+.ntab:hover{color:var(--text-dim)}.ntab.active{color:var(--blue);border-bottom-color:var(--blue)}
+
+.ntc{display:none;padding:16px 14px}.ntc.active{display:block}
+
+/* GUIDE */
+.g-context{background:linear-gradient(135deg,var(--blue-d),rgba(176,96,255,.08));
+  border:1px solid var(--blue);border-radius:8px;padding:13px 14px;margin-bottom:14px;font-size:13px;
+  color:var(--text-dim);line-height:1.8}
+.g-context strong{color:var(--blue);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;display:block;margin-bottom:5px}
+
+.sec-title{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  color:var(--text-muted);margin:14px 0 8px;display:flex;align-items:center;gap:8px}
+.sec-title::after{content:'';flex:1;height:1px;background:var(--border)}
+
+.gstep{display:flex;gap:10px;margin-bottom:8px;background:var(--bg2);border:1px solid var(--border);
+  border-radius:7px;padding:10px 12px}
+.gstep-n{font-family:'Space Mono',monospace;font-size:10px;color:var(--blue);font-weight:700;
+  min-width:20px;flex-shrink:0;padding-top:1px}
+.gstep-t{font-size:13px;color:var(--text-dim);line-height:1.65}
+.gstep-t strong{color:var(--text)}
+.gstep-t em{color:var(--gold);font-style:normal}
+.gstep-t .warn{color:var(--red)}
+.gstep-t .ok{color:var(--green)}
+
+.detail-box{border-radius:7px;padding:11px 13px;margin-bottom:8px;font-size:13px;line-height:1.7;border:1px solid}
+.db-blue{background:var(--blue-d);border-color:var(--blue);color:var(--text-dim)}
+.db-green{background:var(--green-d);border-color:var(--green);color:var(--text-dim)}
+.db-red{background:var(--red-d);border-color:var(--red);color:var(--text-dim)}
+.db-gold{background:var(--gold-d);border-color:var(--gold);color:var(--text-dim)}
+.db-orange{background:var(--orange-d);border-color:var(--orange);color:var(--text-dim)}
+.db-purple{background:var(--purple-d);border-color:var(--purple);color:var(--text-dim)}
+.db-cyan{background:var(--cyan-d);border-color:var(--cyan);color:var(--text-dim)}
+.detail-box strong{color:var(--text);font-size:10px;letter-spacing:1px;text-transform:uppercase;display:block;margin-bottom:4px}
+
+.ifthen{background:var(--bg2);border:1px solid var(--border);border-radius:7px;
+  padding:9px 12px;margin-bottom:6px}
+.it-if{font-size:10px;font-family:'Space Mono',monospace;color:var(--text-muted);margin-bottom:3px}
+.it-if span{color:var(--blue)}
+.it-then{font-size:13px;color:var(--text-dim)}
+.it-then span{color:var(--orange);font-weight:600}
+.it-then .back-highlight{color:var(--red);font-weight:700}
+
+.yt-link{display:flex;align-items:center;gap:8px;background:var(--bg2);border:1px solid var(--border);
+  border-radius:7px;padding:10px 12px;margin-bottom:6px;text-decoration:none;color:var(--text-dim);
+  font-size:12px;transition:all .2s;cursor:pointer}
+.yt-link:hover{border-color:var(--red);color:var(--text)}
+.yt-icon{font-size:18px;flex-shrink:0}
+.yt-body{flex:1}
+.yt-title{font-size:12px;font-weight:600;color:var(--text);margin-bottom:1px}
+.yt-sub{font-size:10px;color:var(--text-muted)}
+
+/* TRAINING PLAN */
+.train-day{background:var(--bg2);border:1px solid var(--border);border-radius:8px;margin-bottom:10px;overflow:hidden}
+.td-header{background:var(--bg3);padding:9px 13px;display:flex;justify-content:space-between;align-items:center}
+.td-day{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--blue)}
+.td-focus{font-size:11px;color:var(--text-dim)}
+.td-body{padding:12px 13px}
+.td-step{display:flex;gap:8px;margin-bottom:8px;align-items:flex-start}
+.td-step-n{font-family:'Space Mono',monospace;font-size:10px;color:var(--blue);min-width:22px;flex-shrink:0;padding-top:2px}
+.td-step-t{font-size:13px;color:var(--text-dim);line-height:1.6}
+.td-step-t strong{color:var(--text)}
+
+.drill-card{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px 12px;margin-bottom:6px}
+.drill-name{font-size:12px;font-weight:600;color:var(--cyan);margin-bottom:3px}
+.drill-desc{font-size:12px;color:var(--text-muted);line-height:1.5}
+
+/* SESSION REGISTER */
+.sf-group{margin-bottom:14px}
+.sf-lbl{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);margin-bottom:7px;display:block}
+
+input,textarea,select{background:var(--bg2);border:1px solid var(--border);color:var(--text);
+  border-radius:7px;padding:10px 12px;font-family:'DM Sans',sans-serif;font-size:14px;width:100%;
+  outline:none;transition:border-color .2s;-webkit-appearance:none}
+input:focus,textarea:focus,select:focus{border-color:var(--blue)}
+textarea{resize:vertical;min-height:70px;line-height:1.5}
+
+.ctrs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.ctr-wrap{text-align:center;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px}
+.ctr-lbl{font-size:10px;color:var(--text-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+.ctr-val{font-family:'Space Mono',monospace;font-size:36px;font-weight:700;color:var(--blue);
+  line-height:1;margin-bottom:8px;display:block}
+.ctr-val.red{color:var(--red)}
+.ctr-btns{display:flex;gap:6px;justify-content:center}
+.cbtn{width:38px;height:38px;border-radius:8px;border:1px solid var(--border2);background:var(--bg3);
+  color:var(--text-dim);font-size:20px;line-height:1;cursor:pointer;transition:all .2s;
+  display:flex;align-items:center;justify-content:center;font-family:'DM Sans',sans-serif;
+  -webkit-tap-highlight-color:transparent}
+.cbtn:active{background:var(--blue-d);border-color:var(--blue)}
+
+.res-btns,.partner-btns{display:flex;gap:6px;flex-wrap:wrap}
+.rbtn,.pbtn{flex:1;min-width:80px;padding:9px 6px;border-radius:7px;border:1px solid var(--border);
+  background:var(--bg2);color:var(--text-muted);font-size:12px;font-weight:600;
+  cursor:pointer;transition:all .2s;font-family:'DM Sans',sans-serif;text-align:center;
+  -webkit-tap-highlight-color:transparent}
+.rbtn.on,.pbtn.on{border-color:var(--orange);background:var(--orange-d);color:var(--orange)}
+.rbtn:active,.pbtn:active{opacity:.7}
+
+.stars{display:flex;gap:8px;margin-top:4px}
+.star{font-size:28px;cursor:pointer;color:var(--text-muted);transition:all .15s;user-select:none;
+  background:none;border:none;-webkit-tap-highlight-color:transparent}
+.star.lit{color:var(--gold)}
+
+.blind-row{display:flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--border);
+  border-radius:7px;padding:11px 12px;margin-bottom:12px;cursor:pointer}
+.blind-row input{width:18px;height:18px;accent-color:var(--orange);cursor:pointer;flex-shrink:0}
+.blind-lbl{font-size:13px;color:var(--text-dim);line-height:1.4;cursor:pointer}
+.blind-lbl strong{color:var(--orange)}
+
+.save-btn{width:100%;padding:13px;border-radius:8px;border:none;
+  background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff;
+  font-family:'Syne',sans-serif;font-size:14px;font-weight:800;letter-spacing:1.5px;
+  text-transform:uppercase;cursor:pointer;transition:all .2s;margin-top:4px;
+  -webkit-tap-highlight-color:transparent}
+.save-btn:active{opacity:.8}
+
+/* SESSION HISTORY */
+.shist-hdr{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--text-muted);margin:14px 0 8px}
+.she{background:var(--bg2);border:1px solid var(--border);border-radius:7px;
+  padding:9px 11px;margin-bottom:6px;display:flex;gap:9px;align-items:flex-start}
+.she-date{font-family:'Space Mono',monospace;font-size:9px;color:var(--text-muted);min-width:45px;padding-top:2px}
+.she-body{flex:1;min-width:0}
+.she-r1{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:2px}
+.she-rate{font-family:'Space Mono',monospace;font-size:11px;font-weight:700}
+.she-stars{font-size:11px;color:var(--gold)}
+.she-res,.she-par{font-size:10px;color:var(--text-muted)}
+.she-blind{font-size:10px;color:var(--orange);margin-top:2px}
+.she-note{font-size:11px;color:var(--text-muted);margin-top:3px;line-height:1.4}
+.she-del{background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:15px;
+  padding:2px 4px;flex-shrink:0;-webkit-tap-highlight-color:transparent}
+.she-del:active{color:var(--red)}
+
+/* METRICS */
+.mgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.mbox{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:11px;text-align:center}
+.mval{font-family:'Space Mono',monospace;font-size:22px;font-weight:700;line-height:1}
+.mlab{font-size:9px;color:var(--text-muted);margin-top:3px;letter-spacing:.5px;text-transform:uppercase}
+
+.rbar-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:13px;margin-bottom:10px}
+.rbar-title{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text-muted);margin-bottom:10px}
+.rbar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.rbar-lbl{font-size:11px;color:var(--text-dim);min-width:55px}
+.rbar-outer{flex:1;height:10px;background:var(--bg3);border-radius:3px;overflow:hidden}
+.rbar-inner{height:100%;border-radius:3px;transition:width .5s ease}
+.rbar-pct{font-family:'Space Mono',monospace;font-size:10px;min-width:32px;text-align:right}
+
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:8px}
+.cal-cell{aspect-ratio:1;border-radius:3px;background:var(--bg3);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--text-muted)}
+.cal-cell.has{background:var(--blue-d);border-color:var(--blue);color:var(--blue)}
+.cal-cell.blind{background:var(--gold-d);border-color:var(--gold);color:var(--gold)}
+
+/* GATE */
+.gcrit{display:flex;align-items:flex-start;gap:10px;background:var(--bg2);
+  border:1px solid var(--border);border-radius:8px;padding:11px 13px;margin-bottom:7px;transition:all .3s}
+.gcrit.met{border-color:var(--green);background:var(--green-d)}
+.gcrit.fail{border-color:var(--red);background:var(--red-d)}
+.gcrit-icon{font-size:16px;flex-shrink:0;margin-top:1px}
+.gcrit-body{flex:1}
+.gcrit-name{font-size:13px;font-weight:600;margin-bottom:2px}
+.gcrit.met .gcrit-name{color:var(--green)}
+.gcrit-desc{font-size:11px;color:var(--text-muted);line-height:1.4}
+.gcrit-cur{font-family:'Space Mono',monospace;font-size:10px;margin-top:4px}
+.gcrit-cur.g{color:var(--green)}.gcrit-cur.w{color:var(--gold)}.gcrit-cur.r{color:var(--red)}
+
+.gcheck{display:flex;align-items:flex-start;gap:9px;padding:9px 12px;background:var(--bg2);
+  border:1px solid var(--border);border-radius:7px;margin-bottom:5px;cursor:pointer;
+  transition:all .2s;-webkit-tap-highlight-color:transparent}
+.gcheck:active{opacity:.7}
+.gcheck.on{background:var(--green-d);border-color:var(--green)}
+.gcheck input{width:16px;height:16px;accent-color:var(--green);cursor:pointer;flex-shrink:0;margin-top:1px}
+.gcheck label{font-size:12px;color:var(--text-dim);cursor:pointer;line-height:1.5}
+.gcheck.on label{color:var(--green)}
+
+.gate-sum{background:var(--bg2);border-radius:10px;padding:14px;border:1px solid var(--border);margin-top:12px}
+.gate-verdict{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;text-align:center;padding:10px 0 6px;letter-spacing:1px}
+.gate-verdict.pass{color:var(--green)}.gate-verdict.fail{color:var(--red)}
+.gate-verdict.close{color:var(--gold)}.gate-verdict.pending{color:var(--text-muted)}
+.gate-hint{font-size:11px;color:var(--text-muted);text-align:center;margin-top:4px;line-height:1.6}
+
+.adv-btn{width:100%;padding:13px;border-radius:8px;border:none;
+  background:linear-gradient(135deg,var(--green),#00a870);color:#000;
+  font-family:'Syne',sans-serif;font-size:14px;font-weight:800;letter-spacing:1.5px;
+  text-transform:uppercase;cursor:pointer;transition:all .2s;margin-top:10px}
+.adv-btn:active{opacity:.8}
+.adv-btn:disabled{opacity:.3;cursor:not-allowed}
+.retry-btn{width:100%;padding:11px;border-radius:8px;border:1px solid var(--orange);
+  background:var(--orange-d);color:var(--orange);font-family:'Syne',sans-serif;
+  font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;
+  transition:all .2s;margin-top:8px}
+.retry-btn:active{opacity:.7}
+
+/* SIDE QUESTS */
+.sq{background:var(--bg2);border:1px solid var(--border);border-radius:9px;
+  margin-bottom:10px;overflow:hidden;transition:border-color .2s}
+.sq.done{border-color:var(--purple)}
+.sq-hdr{padding:12px 13px;display:flex;justify-content:space-between;align-items:center;
+  cursor:pointer;user-select:none;transition:background .2s;-webkit-user-select:none}
+.sq-hdr:active{background:var(--bg3)}
+.sq-hl{flex:1;min-width:0}
+.sq-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sq-sub{font-size:11px;color:var(--text-muted);margin-top:2px}
+.sq-badge{font-size:9px;font-weight:700;padding:3px 8px;border-radius:4px;letter-spacing:.5px;
+  text-transform:uppercase;border:1px solid var(--purple);color:var(--purple);
+  background:var(--purple-d);white-space:nowrap;flex-shrink:0;margin-left:8px}
+.sq-badge.done{background:rgba(176,96,255,.35)}
+.sq-body{display:none;padding:13px;border-top:1px solid var(--border)}
+.sq-body.open{display:block}
+.sq-note{margin-top:8px}
+.sq-save{margin-top:6px;padding:7px 14px;border-radius:6px;border:1px solid var(--purple);
+  background:var(--purple-d);color:var(--purple);font-size:11px;font-weight:700;
+  cursor:pointer;font-family:'DM Sans',sans-serif}
+.sq-complete{width:100%;padding:10px;border-radius:7px;border:none;
+  background:linear-gradient(135deg,var(--purple),#7c3aed);color:#fff;
+  font-family:'Syne',sans-serif;font-size:12px;font-weight:700;letter-spacing:1px;
+  text-transform:uppercase;cursor:pointer;margin-top:8px}
+.sq-complete:disabled{opacity:.4;cursor:not-allowed}
+
+/* MODAL */
+.moverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:1000;
+  align-items:center;justify-content:center;padding:20px}
+.moverlay.open{display:flex}
+.modal{background:var(--bg1);border:1px solid var(--border2);border-radius:14px;
+  padding:24px 20px;max-width:430px;width:100%;
+  animation:mpop .2s cubic-bezier(.4,0,.2,1)}
+@keyframes mpop{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
+.modal h2{font-family:'Syne',sans-serif;font-size:19px;font-weight:800;margin-bottom:8px}
+.modal p{color:var(--text-dim);font-size:13px;line-height:1.7;margin-bottom:16px}
+.mbtns{display:flex;gap:8px}
+.mb-ok{flex:1;padding:11px;border-radius:8px;border:none;background:var(--green);color:#000;
+  font-family:'Syne',sans-serif;font-weight:800;font-size:13px;letter-spacing:1px;text-transform:uppercase;cursor:pointer}
+.mb-cancel{flex:1;padding:11px;border-radius:8px;border:1px solid var(--border2);background:transparent;
+  color:var(--text-dim);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer}
+
+/* TOAST */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:var(--bg3);border:1px solid var(--green);border-radius:8px;padding:10px 18px;
+  font-size:13px;color:var(--green);font-weight:600;z-index:2000;
+  transition:transform .3s ease;white-space:nowrap}
+#toast.show{transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<div id="hdr">
+  <h1>BJJ PATH</h1>
+  <p>Progressão sequencial · Gates de domínio · Foco em finalização</p>
+  <div class="hdr-pills" id="hdr-pills"></div>
+</div>
+
+<div id="ovr">
+  <div class="ovr-card">
+    <div class="ovr-top">
+      <span class="ovr-lbl">Progresso Geral</span>
+      <span class="ovr-pct" id="ovr-pct">0%</span>
+    </div>
+    <div class="ovr-bar"><div class="ovr-fill" id="ovr-fill" style="width:0%"></div></div>
+    <div class="ovr-nodes" id="ovr-nodes"></div>
+  </div>
+</div>
+
+<div id="focus-card">
+  <div class="fc-inner" id="fc-inner">
+    <div class="fc-icon">🎯</div>
+    <div class="fc-body">
+      <div class="fc-label">Foco Atual</div>
+      <div class="fc-title" id="fc-title">Carregando...</div>
+      <div class="fc-sub" id="fc-sub"></div>
+    </div>
+  </div>
+</div>
+
+<div id="sync-bar" style="max-width:780px;margin:10px auto 0;padding:0 16px;display:flex;justify-content:flex-end;">
+  <div id="sync-status-bar"></div>
+</div>
+
+<div id="path"></div>
+
+<!-- ADVANCE MODAL -->
+<div class="moverlay" id="madv" onclick="if(event.target===this)closeMadv()">
+  <div class="modal">
+    <h2>🏆 Avançar de nível?</h2>
+    <p id="madv-txt">Você atendeu todos os critérios.</p>
+    <div class="mbtns">
+      <button class="mb-ok" onclick="confirmAdv()">Avançar ✓</button>
+      <button class="mb-cancel" onclick="closeMadv()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast">✓ Salvo</div>
+
+<script>
+// ═══════════════════════════════════
+// DATA — 12 NÓDULOS SEQUENCIAIS
+// ═══════════════════════════════════
+const NODES = [
+{
+  id:'n01',step:1,emoji:'🦋',
+  name:'Butterfly Guard — Base',
+  tags:['guarda gancho','Marcelo Garcia','Adam Wardzinski','fundação'],
+  tagTypes:['tag-pos','tag-sys','tag-sys','tag-key'],
+  context:'A guarda gancho (butterfly) é sua posição de entrada. De qualquer pé de luta sentado você insere os ganchos e assume o controle. É uma guarda OFENSIVA — você não está esperando, está ameaçando. Marcelo Garcia e Adam Wardzinski são os maiores modelos modernos desse sistema.',
+  steps:[
+    {n:'01',t:'<strong>Postura sentada, não deitada:</strong> Você está ereto como se fosse se levantar. Peso no cóccix, não nas costas. Se você deitar, a guarda vira passiva e ele passa.'},
+    {n:'02',t:'<strong>Ganchos nos quadris (osso ilíaco):</strong> Não no joelho — joelho é fraco, cede fácil. O gancho vai no quadril, apontado para dentro. Isso cria a alavanca real.'},
+    {n:'03',t:'<strong>Controle de cotovelos/pulsos:</strong> Sempre controle os braços dele. Se ele planta as mãos, perde força. Se planta o cotovelo, você arm draga. Nunca deixe os braços livres.'},
+    {n:'04',t:'<strong>Joelhos juntos (fechado):</strong> Posição padrão de Wardzinski — joelhos juntos com os ganchos internos. Isso força ele a abrir e expõe os braços. Quando você quer elevar, abre os joelhos.'},
+    {n:'05',t:'<strong>Distância controlada:</strong> Nem muito perto (ele passa), nem muito longe (perde os ganchos). A distância ideal: ganchos inseridos, cotovelos controlados, cabeça na linha do peito dele.'},
+    {n:'06',t:'<em>Detalhe Wardzinski:</em> Ele usa a posição de "joelhos fechados com ganchos" para forçar o adversário a se abaixar ou abrir — criando os gatilhos para arm drag e elevator. É uma armadilha postural.'},
+    {n:'07',t:'<em>Detalhe Marcelo:</em> Sempre ameaça o arm drag. Mesmo sem executar, o adversário precisa reagir. Essa reação é o que Marcelo usa — ele não age, ele REAGE à reação do adversário.'}
+  ],
+  keyDetail:'A ameaça constante de arm drag e elevator força o adversário a cometer erros posturais. Você não precisa executar — precisa AMEAÇAR.',
+  error:'Deitar na guarda. Assim que você deita, perde o ângulo de elevação e o arm drag. A postura sentada é inegociável.',
+  backPath:'Todo caminho das costas começa aqui: arm drag → costas, elevator + underhook → side control → costas, shin-to-shin → SLX → costas.',
+  ifthen:[
+    {if:'Ele coloca mão no chão ou cotovelo exposto',then:'ARM DRAG — controla pulso 2-on-1, draga e explode quadril para costas'},
+    {if:'Ele está pesado e alto',then:'ELEVATOR + underhook — gancho eleva, underhook guia, vai para COSTAS ou side control'},
+    {if:'Ele está longe ou em pé',then:'Shin-to-shin → SLX → sweep ou COSTAS'},
+    {if:'Ele agarra seus pulsos',then:'2-on-1 imediato → ARM DRAG → COSTAS'},
+    {if:'Ele tenta passar pela direita',then:'Gira o quadril direita → entra no arm drag → COSTAS'},
+  ],
+  ytLinks:[
+    {title:'Marcelo Garcia — Butterfly Guard System',sub:'Fundamentos e arm drag entries',url:'https://www.youtube.com/results?search_query=marcelo+garcia+butterfly+guard+system'},
+    {title:'Adam Wardzinski — Butterfly Guard Details',sub:'Joelhos fechados e entradas características',url:'https://www.youtube.com/results?search_query=adam+wardzinski+butterfly+guard+details'},
+    {title:'Butterfly Guard vs Standing — Entries',sub:'Como inserir ganchos de qualquer distância',url:'https://www.youtube.com/results?search_query=butterfly+guard+entries+standing+opponent'},
+  ],
+  trainPlan:[
+    {day:'Treino 1 — Instalação',focus:'Só postura',steps:[
+      {n:'1',t:'<strong>Aquecimento (5 min):</strong> Hip bump sozinho — 50x. Sobe o quadril explosivo do chão. Esse movimento é a base do elevator.'},
+      {n:'2',t:'<strong>Round posicional (3x3min):</strong> Peça ao parceiro para começar sentado frente a frente. SEU ÚNICO OBJETIVO é manter a postura sentada e os ganchos inseridos por 3 minutos. Não ataque. Só mantenha.'},
+      {n:'3',t:'<strong>Foco de atenção:</strong> A cada 30 segundos pergunte: "estou deitado?" Se sim, corrija. O treino é a consciência da postura.'},
+      {n:'4',t:'<strong>Revisão pós-treino (2 min):</strong> Anote quantas vezes você deitou involuntariamente. Isso é seu baseline.'},
+    ]},
+    {day:'Treino 2 — Ameaça',focus:'Arm drag sem executar',steps:[
+      {n:'1',t:'<strong>Início do round:</strong> Assuma butterfly. Busque controle de cotovelo/pulso nos primeiros 10 segundos.'},
+      {n:'2',t:'<strong>Missão:</strong> Toda vez que o cotovelo dele ficar exposto, FAÇA O MOVIMENTO de arm drag até 50% — não complete, mas force a reação. Observe o que ele faz.'},
+      {n:'3',t:'<strong>Anote as reações:</strong> Ele puxa o braço? Abaixa a cabeça? Fica pesado? Cada reação tem uma continuação no sistema.'},
+      {n:'4',t:'<strong>Último round:</strong> Complete 3 arm drags reais tentando ir às costas. Use o que observou.'},
+    ]},
+  ],
+  criteria:{minRate:40,minAttempts:12,checks:[
+    'Mantive postura sentada em 70%+ das tentativas (não deitei)',
+    'Inseri ganchos corretamente (nos quadris, não nos joelhos) em 3+ treinos',
+    'Identifiquei o gatilho de arm drag pelo menos 5x (mesmo sem executar)',
+    'Parceiro sentiu a ameaça e mudou o comportamento por causa da minha guarda',
+  ]},
+  sideQuests:[
+    {id:'sq_bf_w',name:'Wardzinski — Posição de Joelhos Fechados',desc:'Estudar e aplicar o detalhe característico',steps:['Assistir Wardzinski butterfly specifics','Praticar a posição de joelhos fechados com ganchos internos','Observar como ele força o adversário a se abrir']},
+    {id:'sq_bf_drill',name:'Hip Bump Drill — 200 reps',desc:'A base muscular de toda a butterfly guard',steps:['100 hip bumps para cima (elevator)','100 hip bumps laterais (base para arm drag)','Conectar ao shadow grappling: butterfly → arm drag']},
+  ]
+},
+{
+  id:'n02',step:2,emoji:'✋',
+  name:'Arm Drag — A Arma Central',
+  tags:['transição','Marcelo Garcia','costas','timing'],
+  tagTypes:['tag-sweep','tag-sys','tag-back','tag-key'],
+  context:'O arm drag é a técnica mais importante do seu sistema. Não é um movimento de força — é um redirecionamento. Você não puxa o adversário, você o passa de um lado para o outro enquanto seu quadril explode na direção oposta. Marcelo Garcia é a referência absoluta.',
+  steps:[
+    {n:'01',t:'<strong>2-on-1 antes de tudo:</strong> Duas mãos no pulso/antebraço dele. Uma na frente (pulso), uma atrás (cotovelo). Esse controle dual é o que dá estrutura ao drag.'},
+    {n:'02',t:'<strong>Não puxe para você — passe pelo seu lado:</strong> O movimento não é puxar o braço em direção ao seu peito. É passar o braço PELO SEU LADO, como se fosse colocar o cotovelo dele atrás de você.'},
+    {n:'03',t:'<strong>Quadril explode no lado oposto SIMULTANEAMENTE:</strong> Enquanto passa o braço pela direita, seu quadril vai para a esquerda. São movimentos simultâneos, não sequenciais. Se o quadril não se move, o drag não funciona.'},
+    {n:'04',t:'<strong>Cabeça vai junto:</strong> Sua cabeça e ombros giram para o lado do drag. Você está se virando para olhar para as costas dele.'},
+    {n:'05',t:'<em>Detalhe Marcelo:</em> Ele nunca força o drag. Ele espera o adversário fazer UMA coisa: empurrar, puxar, ou ficar parado. Qualquer movimento cria o momento certo.'},
+    {n:'06',t:'<em>Detalhe Wardzinski:</em> Ele usa o drag da posição de joelhos fechados — quando o adversário tenta abrir os joelhos dele, cria o espaço para o braço entrar no 2-on-1.'},
+    {n:'07',t:'<strong>Após o drag:</strong> Você está atrás do ombro dele. Da costas é natural. Não pare — siga o movimento até o SEATBELT imediato.'},
+  ],
+  keyDetail:'O arm drag funciona porque você cria um ângulo que o adversário não pode defender sem girar completamente. Se ele gira, você segue. Se não gira, você já está nas costas.',
+  error:'Puxar com os dois braços sem mover o quadril. O quadril é o motor do arm drag — sem ele, é só um puxão fraco que ele vai resistir facilmente.',
+  backPath:'Arm drag → costas é o caminho principal. Se ele gira e deixa a perna → single leg. Se abaixa a cabeça → front headlock → guilhotina. Mas o destino primário é SEMPRE as costas.',
+  ifthen:[
+    {if:'Ele não girou após o drag',then:'<span class="back-highlight">COSTAS DIRETO — seatbelt imediato, não espere</span>'},
+    {if:'Girou mas deixou a perna',then:'Single leg — cabeça do lado de fora — por cima → busca COSTAS'},
+    {if:'Abaixou a cabeça',then:'Front headlock → guilhotina (prioridade) ou COSTAS pelo lado'},
+    {if:'Se livrou do drag',then:'Reset para butterfly — não repita o mesmo drag duas vezes seguidas'},
+    {if:'Ele trava os braços',then:'2-on-1 muda para o outro braço — ou elevator como ameaça alternativa'},
+  ],
+  ytLinks:[
+    {title:'Marcelo Garcia — Arm Drag From Butterfly',sub:'O arm drag original e mais eficiente',url:'https://www.youtube.com/results?search_query=marcelo+garcia+arm+drag+butterfly+guard'},
+    {title:'Arm Drag to Back Take — Details',sub:'Conexão direta arm drag → costas',url:'https://www.youtube.com/results?search_query=arm+drag+back+take+details+bjj'},
+    {title:'2-on-1 Grip — Setup e Variações',sub:'Como criar e manter o controle 2-on-1',url:'https://www.youtube.com/results?search_query=2on1+grip+arm+drag+bjj+details'},
+  ],
+  trainPlan:[
+    {day:'Treino 1 — Mecanismo',focus:'Arm drag técnico (sem resistência)',steps:[
+      {n:'1',t:'<strong>Drill cooperativo (10 min):</strong> Parceiro dá o braço, você arm draga 20x de cada lado. Foco: sentir o 2-on-1, o movimento do quadril e o giro para trás.'},
+      {n:'2',t:'<strong>Round posicional (3x3min):</strong> Começa na butterfly. ÚNICO objetivo: completar 2 arm drags com chegada nas costas por round.'},
+      {n:'3',t:'<strong>O que observar:</strong> Quando o arm drag funcionou, o que estava diferente? Timing? Qualidade do 2-on-1? Movimento do quadril?'},
+    ]},
+    {day:'Treino 2 — Timing e resistência',focus:'Arm drag com parceiro resistindo',steps:[
+      {n:'1',t:'<strong>Rounds abertos (4x5min):</strong> Jogo normal a partir de butterfly. Missão: tentar arm drag toda vez que o cotovelo aparecer — mesmo se não funcionar.'},
+      {n:'2',t:'<strong>Registre:</strong> Tentativas e quantas chegaram nas costas. Não se frustre com taxa baixa — estamos calibrando o timing.'},
+      {n:'3',t:'<strong>Revisão:</strong> Em que momento o arm drag não funcionou? O 2-on-1 estava fraco? O quadril não foi junto? Anote 1 detalhe para corrigir.'},
+    ]},
+  ],
+  criteria:{minRate:40,minAttempts:15,checks:[
+    'Fiz 2-on-1 antes de TODO arm drag — nenhuma vez tentei com 1 mão só',
+    'O quadril foi junto em todas as tentativas (não só os braços)',
+    'Arm drag funcionou contra alguém do meu nível ou acima em 3+ vezes',
+    'Identifiquei a resposta correta após o drag em 70%+ das vezes',
+  ]},
+  sideQuests:[
+    {id:'sq_ad_3pos',name:'Arm Drag das 3 Posições',desc:'Butterfly, seated, guarda fechada',steps:['10x arm drag da butterfly cooperativo','10x arm drag do seated guard','10x arm drag da guarda fechada','Qual saiu mais natural? Anote.']},
+    {id:'sq_ad_mg',name:'Marcelo Garcia — Arm Drag System Completo',desc:'Estudar todas as variações do sistema',steps:['Assistir Marcelo Garcia arm drag playlist completa','Anotar: em que momento exato ele decide fazer o drag?','O que muda entre drag da butterfly vs drag do clinch?']},
+  ]
+},
+{
+  id:'n03',step:3,emoji:'🔙',
+  name:'Pegada de Costas — Seatbelt + Controle',
+  tags:['costas','DESTINO PRIMÁRIO','Marcelo Garcia','controle'],
+  tagTypes:['tag-back','tag-key','tag-sys','tag-pos'],
+  context:'As costas são o destino de TUDO no seu sistema. Não é uma das opções — é O objetivo. Todo movimento leva aqui. O seatbelt é a fundação: sem ele não existe controle, sem controle não existe finalização.',
+  steps:[
+    {n:'01',t:'<strong>SEATBELT É INEGOCIÁVEL:</strong> Um braço POR CIMA do ombro (braço de cima), um braço POR BAIXO da axila (braço de baixo). Mãos conectadas no PEITO dele, não na barriga ou nos lados.'},
+    {n:'02',t:'<strong>Peito COLADO nas costas:</strong> Não existe espaço entre você e ele. Seu peito cola nas costas dele ANTES de pensar em hooks. Se há espaço, ele vai escapar.'},
+    {n:'03',t:'<strong>Chin over shoulder (queixo sobre o ombro):</strong> Seu queixo vai sobre o ombro do lado do braço de cima. Isso fecha o espaço para o pescoço e cria o ângulo do RNC.'},
+    {n:'04',t:'<strong>Hooks depois do seatbelt:</strong> Com seatbelt estabilizado e peito colado, agora insere os hooks. Um de cada vez. Hook de cima primeiro (do lado do braço de cima).'},
+    {n:'05',t:'<strong>Posição no chão:</strong> Você está de lado, não de costas. Joelho de baixo no chão, hook de baixo ativo. Isso impede que ele role para cima de você.'},
+    {n:'06',t:'<em>Detalhe crítico:</em> O braço de BAIXO (underhook) controla o quadril dele. Não o ombro, não a barriga — o quadril. Isso é o que bloqueia as escapadas laterais.'},
+    {n:'07',t:'<em>Detalhe Marcelo:</em> Ele NUNCA solta o seatbelt para colocar hook. O seatbelt fica até o momento em que o hook está completamente inserido e confirmado.'},
+    {n:'08',t:'<strong>Se ele tenta virar para dentro (para frente):</strong> Não resista — aceite. Ele está te dando o mount. É um resultado tão bom quanto.'},
+  ],
+  keyDetail:'SEATBELT → PEITO COLADO → QUEIXO SOBRE OMBRO → HOOKS. Essa sequência é sagrada. Pular qualquer etapa resulta em perda da posição.',
+  error:'Pressa para colocar hooks sem o seatbelt. Resultado: ele vira, você perde tudo. Seatbelt é a âncora. Sem âncora, tudo flutua.',
+  backPath:'De costas você tem 3 finalizações primárias: RNC (principal), short choke/ezekiel (quando ele defende o pescoço), arm triangle (quando ele escapa pelo underhook side). Não saia daqui sem tentar.',
+  ifthen:[
+    {if:'Seatbelt + hooks estabelecidos',then:'ATAQUE O RNC — não espere, inicie imediatamente'},
+    {if:'Ele defende o pescoço com as mãos',then:'Peel the hands → short choke ou ezekiel da posição'},
+    {if:'Ele escapa pelo lado do underhook',then:'ARM TRIANGLE — segue o movimento, não luta contra'},
+    {if:'Ele vira para dentro completamente',then:'ACEITA → você está no mount agora — Ezekiel ou arm bar'},
+    {if:'Ele senta na sua frente',then:'Volta para butterfly — reinsere ganchos'},
+  ],
+  ytLinks:[
+    {title:'Marcelo Garcia — Back Control Masterclass',sub:'Seatbelt, hooks e controle completo',url:'https://www.youtube.com/results?search_query=marcelo+garcia+back+control+masterclass'},
+    {title:'Back Control Details — Seatbelt Mechanics',sub:'Posicionamento exato das mãos e do corpo',url:'https://www.youtube.com/results?search_query=back+control+seatbelt+mechanics+details+bjj'},
+    {title:'How to Maintain Back Control — 3 Escapes Solved',sub:'As 3 escapadas e como responder',url:'https://www.youtube.com/results?search_query=back+control+maintain+escape+prevention+bjj'},
+  ],
+  trainPlan:[
+    {day:'Treino 1 — Instalação do Controle',focus:'Só manter costas 30s',steps:[
+      {n:'1',t:'<strong>Round posicional (4x3min):</strong> Começa nas costas do adversário. ÚNICO objetivo: manter por 30 segundos sem atacar. Apenas controle.'},
+      {n:'2',t:'<strong>Checklist mental a cada 10s:</strong> Seatbelt firme? Peito colado? Queixo no ombro? Hook de baixo ativo? Se algum estiver faltando, corrija antes de atacar.'},
+      {n:'3',t:'<strong>Anote:</strong> Quanto tempo em média você manteve? Por onde ele escapou? Qual escapada você não tinha resposta?'},
+    ]},
+    {day:'Treino 2 — Controle + Ataque',focus:'Manter e buscar finalização',steps:[
+      {n:'1',t:'<strong>Regra do treino:</strong> Quando chegar nas costas (de qualquer forma), você NÃO PODE sair sem tentar pelo menos 1 finalização.'},
+      {n:'2',t:'<strong>Sequência obrigatória:</strong> Seatbelt → confirma peito → confirma queixo → hook → ATACA RNC. Se ele defende, vai para short choke. Se não pegar, mantém e reinicia.'},
+      {n:'3',t:'<strong>Registre:</strong> Chegou nas costas X vezes. Tentou finalização X vezes. Finalizou X vezes. Esses são os números que importam.'},
+    ]},
+  ],
+  criteria:{minRate:40,minAttempts:12,checks:[
+    'Mantive costas com seatbelt por 30+ segundos em 3 treinos',
+    'Não perdi costas por falta de seatbelt nas últimas 5 tentativas',
+    'Identifiquei e executei a resposta correta para pelo menos 2 tipos de escapada',
+    'Tentei finalização em 100% das vezes que cheguei nas costas',
+  ]},
+  sideQuests:[
+    {id:'sq_bk_esc',name:'3 Escapadas + Respostas',desc:'Dominar as contra-medidas',steps:['Pesquisar: top 3 back escapes','Para cada: qual é a resposta EXATA?','Praticar cada escapada + resposta 10x com parceiro cooperativo']},
+    {id:'sq_bk_viz',name:'Visualização — Sequência Completa das Costas',desc:'5 minutos de visualização detalhada',steps:['Fechar os olhos, 5 min','Visualizar: arm drag → seatbelt → peito colado → hook → RNC → finalização','Repetir com resistência: ele defende → resposta → nova tentativa']},
+  ]
+},
+{
+  id:'n04',step:4,emoji:'🤝',
+  name:'RNC — Rear Naked Choke',
+  tags:['FINALIZAÇÃO','costas','RNC','letal'],
+  tagTypes:['tag-fin','tag-back','tag-fin','tag-key'],
+  context:'O RNC é sua finalização principal. Com as costas controladas, essa é a conclusão lógica de todo o sistema. A técnica parece simples mas tem detalhes que fazem a diferença entre finalizar e não finalizar.',
+  steps:[
+    {n:'01',t:'<strong>Confirme o seatbelt antes de tudo:</strong> Não inicie o RNC sem seatbelt firme. Sem ancoragem, assim que você tirar uma mão para o pescoço, ele vira.'},
+    {n:'02',t:'<strong>A mão sobe pela LATERAL, nunca pela frente:</strong> O braço do RNC sobe pelo LADO do pescoço, não pela frente. Se for pela frente, ele abaixa o queixo e bloqueia. Lateral = bypass do queixo.'},
+    {n:'03',t:'<strong>Posição do cotovelo:</strong> O cotovelo fica diretamente embaixo do queixo dele. Não do lado, não embaixo da garganta — embaixo do queixo. Essa posição fecha a jugular.'},
+    {n:'04',t:'<strong>Mão vai para trás da sua cabeça, não da cabeça dele:</strong> Erros comuns: mão na cabeça dele ou mão no seu ombro. Correto: mão vai para trás da SUA cabeça, apertando sua própria nuca.'},
+    {n:'05',t:'<strong>Bícep aperta, antebraço aperta:</strong> Duas pressões simultâneas: bícep fecha do lado direito, antebraço fecha do lado esquerdo da garganta. As duas artérias carótidas.'},
+    {n:'06',t:'<strong>Mão livre (braço de baixo) pressiona a cabeça:</strong> O braço de baixo (underhook) sobe e pressiona a cabeça dele para dentro do seu bícep. Isso fecha o espaço restante.'},
+    {n:'07',t:'<em>Detalhe Marcelo:</em> Ele usa o "body triangle" (triângulo de corpo com as pernas) para liberar os hooks e ter mais controle. Com o body triangle, ambas as mãos ficam livres para o RNC.'},
+    {n:'08',t:'<strong>Não aperte antes de ter a posição:</strong> Apertar sem posição certa = esforço sem resultado. Confirme os 4 pontos: lateral, cotovelo no queixo, mão na nuca, antebraço fechado — depois aperta.'},
+  ],
+  keyDetail:'O RNC não é força — é posição. Se você está esforçando muito para apertar, a posição está errada. Posição certa = finalização com pouca força.',
+  error:'Mão pela frente do pescoço. Ele vai abaixar o queixo, bloquear e escapar. Sempre pela lateral. Sempre.',
+  backPath:'Se o RNC não fechar: short choke (braço de baixo pelo pescoço), ezekiel (manga do seu próprio braço), arm triangle se ele escapa o underhook side.',
+  ifthen:[
+    {if:'Pescoço aberto, braço subiu pela lateral',then:'FECHA O RNC — bícep + antebraço + mão na nuca'},
+    {if:'Ele abaixou o queixo bloqueando',then:'Peel the hands + espera abertura → ou muda para short choke'},
+    {if:'Ele defende com as duas mãos',then:'Peel one hand → passa pelo gap → RNC ou short choke'},
+    {if:'Ele escapa pelo underhook',then:'Arm triangle — segue o movimento dele'},
+    {if:'Ele virou para o mount',then:'Ezekiel do mount ou arm bar'},
+  ],
+  ytLinks:[
+    {title:'Marcelo Garcia — RNC Details',sub:'O RNC mais afiado do grappling',url:'https://www.youtube.com/results?search_query=marcelo+garcia+rear+naked+choke+details'},
+    {title:'RNC Mechanics — Lateral Entry',sub:'Por que a entrada lateral é essencial',url:'https://www.youtube.com/results?search_query=rear+naked+choke+lateral+entry+mechanics'},
+    {title:'RNC Defense and Counters — How to Stop Escapes',sub:'Entender as defesas para superá-las',url:'https://www.youtube.com/results?search_query=rnc+defense+counter+bjj+back+control'},
+  ],
+  trainPlan:[
+    {day:'Treino 1 — Mecanismo do RNC',focus:'Posição antes de força',steps:[
+      {n:'1',t:'<strong>Drill cooperativo (10 min):</strong> Parceiro não resiste. Você pratica 20x a entrada lateral do braço. Confirme: mão chegou na nuca? Cotovelo embaixo do queixo? Antebraço do outro lado?'},
+      {n:'2',t:'<strong>Round posicional (4x3min):</strong> Começa nas costas. Regra: só aperta o RNC depois de confirmar os 4 pontos. Se não confirmou, não aperta.'},
+      {n:'3',t:'<strong>Foco:</strong> Quantas vezes você confirmou os 4 pontos antes de tentar? Quantas finalizações aconteceram com posição confirmada vs tentativa de força?'},
+    ]},
+    {day:'Treino 2 — RNC em situação real',focus:'Aplicar em rounds abertos',steps:[
+      {n:'1',t:'<strong>Regra do treino:</strong> Toda vez que chegar nas costas, você tem que tentar o RNC. Mesmo que ele escape, tentou.'},
+      {n:'2',t:'<strong>Progressão:</strong> Se o RNC não fechar nos primeiros 15 segundos, muda para short choke ou ezekiel. Não fique preso na mesma tentativa.'},
+      {n:'3',t:'<strong>Registre:</strong> Chegou nas costas X vezes. RNC tentado X. Finalizou X. Taxa de conversão é o que importa agora.'},
+    ]},
+  ],
+  criteria:{minRate:30,minAttempts:12,checks:[
+    'Confirmei os 4 pontos (lateral, cotovelo, mão, antebraço) antes de apertar em todas as tentativas',
+    'Finalizei RNC pelo menos 2x',
+    'Nunca mais entrei pelo front (pela frente do pescoço)',
+    'Tentei pelo menos 1 finalização em 100% das vezes nas costas',
+  ]},
+  sideQuests:[
+    {id:'sq_rnc_mg',name:'Body Triangle — Controle sem hooks',desc:'Libera as mãos para o RNC',steps:['Assistir body triangle basics + Marcelo Garcia usando','Praticar o encaixe do body triangle (cruzar os pés ou joelhos?','5x body triangle + RNC em sequência']},
+    {id:'sq_rnc_alt',name:'Short Choke + Ezekiel — Alternativas',desc:'O que fazer quando o RNC é bloqueado',steps:['Técnica do short choke: braço de baixo pelo pescoço','Ezekiel das costas: manga + pressão','Criar fluxo: RNC → bloqueado → short choke → bloqueado → ezekiel']},
+  ]
+},
+{
+  id:'n05',step:5,emoji:'🐙',
+  name:'Octopus Guard — Quando te Achatam',
+  tags:['guarda','Eduardo Telles','ângulo','costas'],
+  tagTypes:['tag-pos','tag-sys','tag-back','tag-back'],
+  context:'Quando o adversário passa por cima e te achata — você perdeu o knee shield ou a butterfly. Não entre em pânico. O Octopus é a sua resposta. O segredo é sair da linha do peito dele.',
+  steps:[
+    {n:'01',t:'<strong>Gatilho: ele te achatou:</strong> Você está flat, ele está pesado em cima. Esse é o momento. Qualquer tentativa de lutar de frente vai falhar — você precisa sair do eixo.'},
+    {n:'02',t:'<strong>Sente no cotovelo LATERALMENTE:</strong> Não tente sentar para cima (ele te empurra de volta). Sente para O LADO — sai da linha do peito dele. O cotovelo que senta é o do lado que ele está pressionando.'},
+    {n:'03',t:'<strong>CONEXÃO DE TRONCO — não de braço:</strong> O erro mais comum é agarrar só o braço. Você precisa conectar ao TRONCO dele — envolva o torso (ribcage), não só o braço. Isso é o que diferencia o Octopus de um agarrar aleatório.'},
+    {n:'04',t:'<em>Detalhe Telles:</em> A conexão é "como um abraço de costas" — você se cola no tronco dele pela lateral. Uma vez conectado, o corpo todo vai junto.'},
+    {n:'05',t:'<strong>Caminhe para trás:</strong> Com a conexão de tronco, caminhe — literalmente caminhe com as pernas — para TRÁS e ao REDOR dele. Não pule. Caminhe.'},
+    {n:'06',t:'<strong>Destino: seatbelt e COSTAS:</strong> O caminhamento te leva naturalmente atrás dele. Quando você chegar, seatbelt imediato. Você não para no Octopus — ele é uma transição.'},
+    {n:'07',t:'<strong>Se ele resistir errado (base fraca):</strong> Jogue o peso para o lado da sua conexão. Octopus sweep. Por cima, depois busca as costas.'},
+  ],
+  keyDetail:'CONEXÃO DE TRONCO antes de caminhar. Se você conectar só ao braço e caminhar, ele vai retirar o braço e você fica sem controle.',
+  error:'Ficar diretamente embaixo dele tentando se mexer para cima. Você não tem estrutura para isso. A saída é LATERAL, não para cima.',
+  backPath:'Octopus → costas é o caminho primário. Octopus sweep → por cima → side control → busca costas. Turtle → reversal ou costas. Tudo leva ao mesmo destino.',
+  ifthen:[
+    {if:'Conectou ao tronco + ele mantém pressão',then:'Caminhe → <span class="back-highlight">COSTAS — seatbelt imediato</span>'},
+    {if:'Ele resiste com base ruim (peso todo em cima)',then:'Octopus sweep → por cima → side control → busca costas'},
+    {if:'Ele recua após sua conexão',then:'Turtle ofensiva → reversal ou costas por baixo'},
+    {if:'Perdeu a conexão de tronco',then:'Volta para knee shield — sem pânico'},
+  ],
+  ytLinks:[
+    {title:'Eduardo Telles — Octopus Guard Original',sub:'O criador explicando o sistema',url:'https://www.youtube.com/results?search_query=eduardo+telles+octopus+guard'},
+    {title:'Octopus Guard Details — Connection and Walk',sub:'A conexão de tronco e o caminhamento',url:'https://www.youtube.com/results?search_query=octopus+guard+details+bjj'},
+    {title:'Turtle Guard Offensive — Eduardo Telles',sub:'Usando a tartaruga para atacar',url:'https://www.youtube.com/results?search_query=eduardo+telles+turtle+guard+offensive'},
+  ],
+  trainPlan:[
+    {day:'Treino 1 — Identificar o Momento',focus:'Reconhecer quando o Octopus aparece',steps:[
+      {n:'1',t:'<strong>Simulação dirigida (10 min):</strong> Parceiro começa no side control por cima. SUA tarefa: entrar no Octopus. Ele não resiste — só mantém o peso.'},
+      {n:'2',t:'<strong>Foco na conexão:</strong> Toda vez que você entrar, pergunte: "conectei ao tronco ou só ao braço?" Só conte como sucesso se foi ao tronco.'},
+      {n:'3',t:'<strong>Round real (3x3min):</strong> Jogo normal. Toda vez que ele te achata, tente o Octopus. Anote quantas vezes o momento apareceu vs quantas você reconheceu e agiu.'},
+    ]},
+    {day:'Treino 2 — Caminhamento e Costas',focus:'Completar o movimento',steps:[
+      {n:'1',t:'<strong>Missão:</strong> De toda entrada no Octopus, tente completar o caminhamento até as costas. Mesmo que não consiga, tente.'},
+      {n:'2',t:'<strong>Detalhe do caminhamento:</strong> Pés pequenos passos laterais — não é um giro, é literalmente caminhar ao redor dele colado.'},
+      {n:'3',t:'<strong>Registre:</strong> Entrei no Octopus X vezes. Completei o caminhamento X vezes. Cheguei nas costas X vezes.'},
+    ]},
+  ],
+  criteria:{minRate:35,minAttempts:10,checks:[
+    'Identifiquei o momento do Octopus (quando ele achata, não antes nem depois) em 3+ treinos',
+    'Fiz conexão DE TRONCO (não de braço) em 70%+ das entradas',
+    'Cheguei nas costas pelo Octopus pelo menos 1x',
+    'Não fiquei preso no Octopus — sempre transicionei',
+  ]},
+  sideQuests:[
+    {id:'sq_oct_map',name:'Mapeie os Momentos do Octopus',desc:'Identificar em que situações aparece',steps:['Em 2 treinos, anotar TODA vez que te achataram','Quantas vezes o Octopus teria funcionado?','Diferença: "ele me achatou" vs "o Octopus apareceu"']},
+    {id:'sq_oct_sweep',name:'Octopus Sweep — Variação',desc:'Quando ele resiste com base fraca',steps:['Entender a mecânica do octopus sweep','Praticar com parceiro cooperativo 15x','Quando usar sweep vs quando ir direto para costas?']},
+  ]
+},
+{
+  id:'n06',step:6,emoji:'🛡️',
+  name:'Knee Shield → Dogfight → Coyote',
+  tags:['meia guarda','Craig Jones','sweep','costas'],
+  tagTypes:['tag-pos','tag-sys','tag-sweep','tag-back'],
+  context:'O knee shield é seu reset quando perde a butterfly ou o octopus. É também a entrada para o dogfight — posição de alta probabilidade de costas ou sweep. Craig Jones é a referência moderna.',
+  steps:[
+    {n:'01',t:'<strong>Knee Shield:</strong> Joelho alto no ombro/clavícula (não abdômen). Quadril girado — você não fica flat. Frame com o braço livre no pulso ou cotovelo dele.'},
+    {n:'02',t:'<strong>Luta pelo underhook:</strong> Quando ele pressiona, seu objetivo é o braço por baixo do braço dele (underhook). Isso é uma batalha — não desista na primeira tentativa.'},
+    {n:'03',t:'<strong>Sobe para o cotovelo:</strong> Com underhook, sobe para o cotovelo. Isso já é UMA VITÓRIA. Não pense além — só sobe para o cotovelo.'},
+    {n:'04',t:'<strong>Dogfight:</strong> Do cotovelo, sobe para a mão. Ambos de quatro, sua cabeça colada no peito dele, quadril baixo. Underhook ativo.'},
+    {n:'05',t:'<em>Detalhe Craig Jones:</em> No dogfight, ele usa o "coyote position" — um passo à frente com o pé externo, quadril baixo, preparando o sweep ou a ida para costas.'},
+    {n:'06',t:'<strong>Coyote Sweep:</strong> Quando ele faz whizzer forte, você vai NA DIREÇÃO que ele empurra. Não contra. Gira no sentido do underhook. É sobre timing, nunca força.'},
+    {n:'07',t:'<strong>Dogfight → Costas:</strong> Quando ele levanta o quadril no dogfight, você desliza para trás dele — seatbelt imediato. Essa é a resposta mais lucrativa do dogfight.'},
+  ],
+  keyDetail:'O dogfight é uma plataforma, não um destino. De lá você vai para sweep (coyote), costas (quadril dele sobe) ou single leg (ele recua). A pressão constante força uma dessas respostas.',
+  error:'Ter underhook mas ficar deitado. O underhook sem o movimento de subida é inútil — ele re-achata você.',
+  backPath:'Dogfight → costas é o caminho mais lucrativo. Quando ele levanta o quadril, você já está em posição de deslizar. Coyote sweep → por cima → side control → busca costas.',
+  ifthen:[
+    {if:'Ele faz whizzer forte no dogfight',then:'Coyote sweep — vai na direção do empurrão'},
+    {if:'Ele levanta o quadril no dogfight',then:'<span class="back-highlight">Desliza → COSTAS — seatbelt imediato</span>'},
+    {if:'Ele recua no dogfight',then:'Single leg → por cima → busca costas'},
+    {if:'Ele pressiona forte no knee shield',then:'Luta underhook → sobe cotovelo → dogfight'},
+    {if:'Ele recua no knee shield',then:'Abre espaço → volta para butterfly'},
+  ],
+  ytLinks:[
+    {title:'Craig Jones — Coyote Guard and Half Guard System',sub:'O sistema completo de Craig Jones',url:'https://www.youtube.com/results?search_query=craig+jones+coyote+guard+half+guard'},
+    {title:'Dogfight Position — Back Take and Sweeps',sub:'Todas as opções do dogfight',url:'https://www.youtube.com/results?search_query=dogfight+position+back+take+sweep+bjj'},
+    {title:'Half Guard Underhook Details',sub:'Como ganhar e manter o underhook',url:'https://www.youtube.com/results?search_query=half+guard+underhook+details+bjj'},
+  ],
+  trainPlan:[
+    {day:'Treino 1 — Underhook e Cotovelo',focus:'Só subir para o cotovelo',steps:[
+      {n:'1',t:'<strong>Round posicional (4x3min):</strong> Começa no knee shield. ÚNICO objetivo: subir para o cotovelo 3x por round.'},
+      {n:'2',t:'<strong>Não pense além do cotovelo:</strong> É fácil querer ir direto para o dogfight ou o sweep. Mas a fundação é o cotovelo. Apenas isso.'},
+      {n:'3',t:'<strong>Anote:</strong> Quantas vezes conseguiu o underhook? Quantas vezes subiu para o cotovelo? Qual foi o obstáculo?'},
+    ]},
+    {day:'Treino 2 — Dogfight e Costas',focus:'Completar a sequência',steps:[
+      {n:'1',t:'<strong>Começa no dogfight:</strong> Parceiro já começa no dogfight com você. Tente 2 coisas: coyote sweep E ida para costas quando quadril dele sobe.'},
+      {n:'2',t:'<strong>Prioridade:</strong> Se o quadril dele subir, vá para costas PRIMEIRO. Coyote é plano B.'},
+      {n:'3',t:'<strong>Registre:</strong> Quantas vezes chegou no dogfight? Quantas costas? Quantos coyotes?'},
+    ]},
+  ],
+  criteria:{minRate:35,minAttempts:12,checks:[
+    'Cheguei no dogfight pelo menos 3x em 1 treino',
+    'Identifiquei o whizzer como oportunidade (não como ameaça) pelo menos 2x',
+    'Fui para costas a partir do dogfight pelo menos 1x',
+    'Raspeei com coyote pelo menos 1x',
+  ]},
+  sideQuests:[
+    {id:'sq_cj_study',name:'Craig Jones — Estudo Completo',desc:'Half guard, coyote, z-guard',steps:['Assistir Craig Jones half guard series completo','Anotar: o que diferencia o coyote do underhook simples?','Como ele decide entre sweep e costas no dogfight?']},
+    {id:'sq_df_drill',name:'Shadow Grappling — Sequência Completa',desc:'Knee shield → dogfight → coyote/costas',steps:['5 min shadow: knee shield → underhook → cotovelo → dogfight → coyote','Adicionar variante costas: mesmo início → dogfight → quadril sobe → seatbelt','Repetir até sentir o fluxo natural']},
+  ]
+},
+{
+  id:'n07',step:7,emoji:'😤',
+  name:'Front Headlock + Guilhotina',
+  tags:['finalização','Marcelo Garcia','oportunidade','letal'],
+  tagTypes:['tag-fin','tag-sys','tag-fin','tag-key'],
+  context:'O front headlock aparece como resultado do arm drag (quando ele abaixa a cabeça) ou após failed takedowns. É uma posição de OPORTUNIDADE — você tem 3-4 segundos antes que ele recupere. A guilhotina de Marcelo Garcia é a referência.',
+  steps:[
+    {n:'01',t:'<strong>Reconheça o gatilho — cabeça baixa:</strong> Cabeça abaixo dos ombros = front headlock disponível. Isso acontece pós arm drag, quando ele tenta takedown, quando ele recua com cabeça baixa.'},
+    {n:'02',t:'<strong>Controle do pescoço:</strong> Seu braço vai em volta do pescoço dele (não do queixo — pescoço). Pressão para baixo na cabeça. Você controla onde ele está olhando.'},
+    {n:'03',t:'<strong>High Elbow Guilhotina — o detalhe mais importante:</strong> O cotovelo aponta para o TETO. Não para o lado, não para baixo — para o teto. Se o cotovelo está baixo, você está pressionando a espinha, não a garganta.'},
+    {n:'04',t:'<strong>Posição do pulso:</strong> O pulso vai no meio da garganta (traqueia + carótidas). Não no queixo, não no pescoço inteiro — na linha central.'},
+    {n:'05',t:'<strong>PUXE, não aperte:</strong> A guilhotina funciona por tração (pull), não por compressão. Você puxa o braço para cima e para o seu peito, não aperta os músculos.'},
+    {n:'06',t:'<em>Detalhe Marcelo:</em> Ele usa a "arm-in guilhotina" quando o braço dele está dentro do seu abraço. Isso muda o ângulo — o cotovelo fica mais atrás do pescoço.'},
+    {n:'07',t:'<strong>Guilhotina → Costas se falhar:</strong> Se a guilhotina não finalizar, o movimento de defesa dele cria ângulo → deslize para as costas. Guilhotina não é só finalização, é setup para costas.'},
+    {n:'08',t:'<strong>Velocidade:</strong> Front headlock decai em 3-4 segundos. Se você não agiu, ele recuperou a postura. Seja rápido ou mude para costas imediatamente.'},
+  ],
+  keyDetail:'COTOVELO PARA O TETO. Se você gravar só uma coisa sobre guilhotina, que seja isso. Cotovelo baixo = espinha. Cotovelo alto = garganta. A diferença entre finalizar e não finalizar.',
+  error:'Apertar com força bruta sem o cotovelo alto. Você vai cansar os antebraços sem nada. Posição correta + tração leve = tap em segundos.',
+  backPath:'Front headlock → guilhotina (finalização primária). Guilhotina falhou → costas pelo ângulo criado. Anaconda/D\'arce quando de quatro apoios. SEMPRE termina em finalização ou costas.',
+  ifthen:[
+    {if:'Pescoço exposto, sem braço dentro',then:'High elbow guilhotina — cotovelo pro teto, puxa'},
+    {if:'Braço dele dentro do seu abraço',then:'Arm-in guilhotina — braço envolve pescoço + braço'},
+    {if:'Ele está de quatro com cabeça baixa',then:'Anaconda (por dentro) ou D\'Arce (por fora)'},
+    {if:'Guilhotina não fechou em 5s',then:'<span class="back-highlight">Deslize para as COSTAS pelo ângulo</span>'},
+    {if:'Ele tenta sair para o lado',then:'Segue o lado → COSTAS'},
+  ],
+  ytLinks:[
+    {title:'Marcelo Garcia — Guillotine System',sub:'High elbow, arm-in e variações',url:'https://www.youtube.com/results?search_query=marcelo+garcia+guillotine+choke+system'},
+    {title:'High Elbow Guillotine — The Detail That Matters',sub:'Por que o cotovelo alto é tudo',url:'https://www.youtube.com/results?search_query=high+elbow+guillotine+details+bjj'},
+    {title:'Front Headlock to Back Take',sub:'Quando a guilhotina não finaliza',url:'https://www.youtube.com/results?search_query=front+headlock+back+take+bjj'},
+  ],
+  trainPlan:[
+    {day:'Treino 1 — Mecanismo da Guilhotina',focus:'Cotovelo alto + tração',steps:[
+      {n:'1',t:'<strong>Drill de posição (10 min):</strong> Parceiro abaixa a cabeça (cooperativo). Você pratica 20x a entrada da guilhotina. Após cada uma, cheque: "cotovelo está apontando pro teto?" Se não, reinicia.'},
+      {n:'2',t:'<strong>Tração vs compressão:</strong> Faça 10x tentando APERTAR. Depois 10x tentando PUXAR. Sinta a diferença no tap do parceiro. Tração funciona melhor.'},
+      {n:'3',t:'<strong>Anote:</strong> Em que porcentagem das tentativas o cotovelo estava alto? Esse é o número que importa.'},
+    ]},
+    {day:'Treino 2 — Front Headlock em situação real',focus:'Reconhecer e agir rápido',steps:[
+      {n:'1',t:'<strong>Missão:</strong> Toda vez que um arm drag criar oportunidade de front headlock, você tem 3 segundos para agir. Actua imediatamente.'},
+      {n:'2',t:'<strong>Fluxo:</strong> Front headlock → tenta guilhotina → se não fechar em 5s → vai para costas. Treina o fluxo completo.'},
+      {n:'3',t:'<strong>Registre:</strong> Oportunidades de front headlock: X. Guilhotinas tentadas: X. Finalizadas: X. Convertidas para costas: X.'},
+    ]},
+  ],
+  criteria:{minRate:30,minAttempts:10,checks:[
+    'Cotovelo estava alto (para o teto) em 100% das tentativas de guilhotina',
+    'Usei tração (pull) não compressão em todas as tentativas',
+    'Finalizei guilhotina pelo menos 1x',
+    'Converti front headlock para costas quando guilhotina não fechou em 2+ ocasiões',
+  ]},
+  sideQuests:[
+    {id:'sq_guil_ai',name:'Arm-In Guilhotina vs High Elbow',desc:'Entender quando usar cada variação',steps:['Definição: arm-in (braço dentro) vs high elbow (sem braço)','5 reps de cada com parceiro cooperativo','Como a posição do braço do adversário determina qual usar?']},
+    {id:'sq_anaconda',name:'Anaconda + D\'Arce — Quando de 4 Apoios',desc:'As variações de quatro apoios',steps:['Anaconda: braço por dentro, rola para o lado do braço','D\'Arce: braço por fora (por cima do ombro), rola','Praticar 5x cada com parceiro de quatro apoios']},
+  ]
+},
+{
+  id:'n08',step:8,emoji:'🦵',
+  name:'Single Leg X + SLX Sweep',
+  tags:['guarda','leg attacks','Marcelo Garcia','sweep'],
+  tagTypes:['tag-pos','tag-fin','tag-sys','tag-sweep'],
+  context:'Quando o adversário está longe ou em pé. Do shin-to-shin você insere o SLX e cria uma das guardas mais versáteis do sistema. Destino primário: sweep para por cima, depois busca costas.',
+  steps:[
+    {n:'01',t:'<strong>Shin-to-shin setup:</strong> Sua canela encosta na canela dele. Essa posição controla a distância e cria a entrada para os ganchos.'},
+    {n:'02',t:'<strong>Dois ganchos no SLX:</strong> Gancho de baixo: embaixo do joelho (dobra posterior). Gancho de cima: no quadril (osso ilíaco). Controle uma perna com dois pontos de alavanca.'},
+    {n:'03',t:'<strong>Controle da perna com as mãos:</strong> Enquanto tem os ganchos, mãos controlam o pé ou o joelho da mesma perna. Dois ganchos + duas mãos = 4 pontos de controle.'},
+    {n:'04',t:'<strong>SLX Sweep — eleva quadril + controla perna:</strong> Eleva o quadril explosivamente para cima E para o lado, enquanto os ganchos trabalham. Simultâneo.'},
+    {n:'05',t:'<em>Detalhe Marcelo:</em> Após o sweep, ele não fica de lado — imediatamente passa para side control e busca as costas se o adversário vira de lado.'},
+    {n:'06',t:'<strong>X-Guard quando base sólida:</strong> Se ele agachar e manter base sólida, transicione para X-Guard: muda a posição dos ganchos e cria um sweep diferente.'},
+    {n:'07',t:'<strong>Wrestle Up quando ele recua:</strong> Se ele pula para trás tentando escapar, hip heist (troca de quadril) e levanta. Você fica por cima.'},
+  ],
+  keyDetail:'O SLX sweep funciona quando quadril sobe E controla a perna simultaneamente. Elevar sem controlar a perna = ele da um passo e você perdeu.',
+  error:'Só elevar o quadril sem controlar a perna com as mãos. Ele dá um passo e passa. Quatro pontos de controle = segurança.',
+  backPath:'SLX sweep → por cima → side control → adversário vira de costas → COSTAS. Wrestle up → por cima → busca costas. Leg lock entry quando permitido.',
+  ifthen:[
+    {if:'Ele tem base alta (em pé)',then:'SLX sweep — quadril + controle de perna'},
+    {if:'Ele agacha firme',then:'Transiciona para X-Guard — sweep diferente'},
+    {if:'Ele recua pulando para trás',then:'Wrestle up → por cima'},
+    {if:'Leg lock permitido',then:'Heel hook ou ankle lock entry'},
+    {if:'Conseguiu sweep por cima',then:'Side control → adversário vira → <span class="back-highlight">COSTAS</span>'},
+  ],
+  ytLinks:[
+    {title:'Single Leg X Guard — Complete System',sub:'Entrada, sweep e transições',url:'https://www.youtube.com/results?search_query=single+leg+x+guard+system+bjj'},
+    {title:'SLX to Back Take',sub:'Do single leg x direto para as costas',url:'https://www.youtube.com/results?search_query=single+leg+x+back+take+bjj'},
+    {title:'X-Guard vs Ashi Garami Differences',sub:'Quando usar cada um',url:'https://www.youtube.com/results?search_query=x+guard+vs+ashi+garami+differences+bjj'},
+  ],
+  trainPlan:[
+    {day:'Treino 1 — Entrada no SLX',focus:'Shin-to-shin e inserção de ganchos',steps:[
+      {n:'1',t:'<strong>Drill (10 min):</strong> Parceiro em pé ou agachado. Você pratica 20x a entrada: shin-to-shin → inserção dos dois ganchos → controle das mãos.'},
+      {n:'2',t:'<strong>Round posicional (3x3min):</strong> Começa sentado com parceiro em pé. Missão: entrar no SLX corretamente (4 pontos) pelo menos 3x por round.'},
+    ]},
+    {day:'Treino 2 — Sweep e Continuação',focus:'Completar para cima e buscar costas',steps:[
+      {n:'1',t:'<strong>Missão:</strong> Toda entrada no SLX deve terminar em sweep ou leg lock attempt. Não fique no SLX estático.'},
+      {n:'2',t:'<strong>Após o sweep:</strong> Chegou por cima → imediatamente busca costas se ele virar de lado. Não se contente só com o side control.'},
+    ]},
+  ],
+  criteria:{minRate:35,minAttempts:10,checks:[
+    'Entrei no SLX com 4 pontos de controle (2 ganchos + 2 mãos) em 3+ ocasiões',
+    'Finalizei o SLX sweep pelo menos 2x',
+    'Transitei para costas após o sweep pelo menos 1x',
+    'Identifiquei quando usar X-guard vs continuar no SLX',
+  ]},
+  sideQuests:[
+    {id:'sq_slx_leg',name:'Leg Lock Entry do SLX',desc:'Quando o regulamento permite',steps:['Entender: SLX é a posição de entrada para heel hook','Ashi garami — posição base para leg locks','Praticar a transição SLX → ashi garami cooperativamente']},
+    {id:'sq_slx_wu',name:'Wrestle Up do SLX',desc:'Hip heist para levantar quando ele recua',steps:['Hip heist drill: 50x de cada lado','Conectar: SLX → ele recua → hip heist → technical stand-up','Terminar sempre por cima']},
+  ]
+},
+{
+  id:'n09',step:9,emoji:'🎯',
+  name:'Side Control → Mount → Finalização',
+  tags:['dominante','Mount','Ezekiel','arm triangle'],
+  tagTypes:['tag-pos','tag-pos','tag-fin','tag-fin'],
+  context:'Quando você chega por cima (após sweep ou single leg), side control é o primeiro passo. Daqui você avança para mount ou busca as costas. Monte é uma posição de finalização — Ezekiel, arm bar, triângulo.',
+  steps:[
+    {n:'01',t:'<strong>Side Control — peso e pressão:</strong> Peito no peito, quadril baixo, cabeça colada. Pressão diagonal (ombro no rosto, quadril no joelho). Joelho próximo ao quadril dele.'},
+    {n:'02',t:'<strong>Ler a reação — costas ou mount:</strong> Ele está flat sem defender? → Mount. Ele está virando de lado? → Costas. Ele está virado completamente? → Costas.'},
+    {n:'03',t:'<strong>Caminho 1 — COSTAS:</strong> Se ele virar de costas ou tentar se defender virando, você já está em posição. Seatbelt imediato.'},
+    {n:'04',t:'<strong>Caminho 2 — MOUNT:</strong> Se ele estiver flat, avança para o mount. Quadril baixo, joelhos fechados nos flancos. Sem espaço entre você e ele.'},
+    {n:'05',t:'<strong>Ezekiel do Mount:</strong> Braço em torno do pescoço, mão entra no espaço interno do outro braço (gi) ou cria pressão (no-gi). Mínima força se posição estiver certa.'},
+    {n:'06',t:'<strong>Arm Triangle do Side Control:</strong> Braço dele fica preso entre seu pescoço e seu braço. Conecte as mãos, pressione a cabeça para o lado do braço preso. Rola para finalizar.'},
+    {n:'07',t:'<em>Detalhe crítico:</em> No mount, NUNCA fique alto. Quadril sempre baixo. Ficar alto = ele faz bridge, você cai, perde a posição. Baixo = estável = finaliza.'},
+  ],
+  keyDetail:'Side control é uma plataforma, não o destino. A pergunta é sempre: "ele vai me dar as costas ou devo ir para o mount?" Leia a reação e aja imediatamente.',
+  error:'Ficar no side control sem avançar. Você tem pressão, mas não está finalizando. Sempre progrida: side control → mount OU → costas. Nunca fique parado.',
+  backPath:'Side control → costas é o caminho mais lucrativo quando ele defende virando. Side control → mount → arm bar/ezekiel/triângulo quando ele fica flat.',
+  ifthen:[
+    {if:'Ele está flat, sem defender',then:'Mount → Ezekiel ou arm bar'},
+    {if:'Ele vira de lado defendendo',then:'<span class="back-highlight">COSTAS — seatbelt imediato</span>'},
+    {if:'Ele vira completamente',then:'<span class="back-highlight">COSTAS direto</span>'},
+    {if:'Pescoço exposto no side',then:'Arm triangle — conecta mãos, pressiona cabeça'},
+    {if:'No mount, ele empurra os braços',then:'Arm bar ou triângulo'},
+  ],
+  ytLinks:[
+    {title:'Side Control to Back Take — When He Turns',sub:'Pegada de costas do side control',url:'https://www.youtube.com/results?search_query=side+control+back+take+bjj'},
+    {title:'Mount Position — Stay Low and Finish',sub:'Controle e finalizações do mount',url:'https://www.youtube.com/results?search_query=mount+position+control+finish+bjj'},
+    {title:'Arm Triangle from Side Control',sub:'Kata gatame — técnica e finalização',url:'https://www.youtube.com/results?search_query=arm+triangle+kata+gatame+side+control+bjj'},
+  ],
+  trainPlan:[
+    {day:'Treino 1 — Ler a Reação',focus:'Side control → costas ou mount',steps:[
+      {n:'1',t:'<strong>Drill dirigido (10 min):</strong> Começa no side control. Parceiro faz 3 reações diferentes: fica flat, vira de lado, vira completamente. Você responde corretamente para cada uma.'},
+      {n:'2',t:'<strong>Regra do treino:</strong> De toda chegada por cima, você deve tentar pelo menos 1 finalização antes de aceitar uma new round.'},
+    ]},
+    {day:'Treino 2 — Finalizar',focus:'Conversão em tap',steps:[
+      {n:'1',t:'<strong>Missão:</strong> Toda vez que chegar no mount, você tenta o Ezekiel. Não procure outras finalizações primeiro — Ezekiel primeiro, depois adapta.'},
+      {n:'2',t:'<strong>Track:</strong> Chegou por cima X vezes. Chegou nas costas X. Chegou no mount X. Finalizou X. Qual é seu gargalo agora?'},
+    ]},
+  ],
+  criteria:{minRate:35,minAttempts:12,checks:[
+    'Identifiquei e atuei corretamente em 3 tipos de reação do adversário (flat/lateral/completo)',
+    'Tentei finalização em 100% das chegadas por cima',
+    'Cheguei nas costas a partir do side control pelo menos 2x',
+    'Finalizei do mount pelo menos 1x (Ezekiel, arm bar ou triângulo)',
+  ]},
+  sideQuests:[
+    {id:'sq_sc_north',name:'Norte-Sul → Kimura/NS Choke',desc:'Opção quando side control é bloqueado',steps:['Gira 180° para norte-sul','Kimura do norte-sul: grip → rotação','NS Choke: braço desce pelo pescoço']},
+    {id:'sq_mount_gift',name:'Gift Wrap → Costas do Mount',desc:'Quando ele vira de lado no mount',steps:['Gift wrap: pega o pulso, passa o braço pela cabeça dele','Usa para ir para as costas ou arm lock','Praticar 10x com parceiro cooperativo']},
+  ]
+},
+{
+  id:'n10',step:10,emoji:'🦁',
+  name:'Adam Wardzinski — Sistema Butterfly Avançado',
+  tags:['Wardzinski','butterfly avançado','arm drag profundo','back system'],
+  tagTypes:['tag-sys','tag-pos','tag-back','tag-back'],
+  context:'Adam Wardzinski é um dos maiores especialistas em butterfly guard da atualidade. Seu sistema complementa o de Marcelo com posições únicas: joelhos fechados, deep half entries e a pegada de costas característica dele.',
+  steps:[
+    {n:'01',t:'<strong>Joelhos fechados — posição base Wardzinski:</strong> Diferente da butterfly clássica (joelhos abertos), ele mantém os joelhos fechados com os ganchos internos. Isso força o adversário a decidir entre abrir (exposição) ou pressionar (elevator).'},
+    {n:'02',t:'<strong>Inside position:</strong> Wardzinski prioriza o controle dos braços de DENTRO — cotovelos dentro dos cotovelos do adversário. Isso fecha o espaço para passes e cria alavanca para o arm drag.'},
+    {n:'03',t:'<strong>Deep Half Entry do Butterfly:</strong> Quando adversário pressiona para passar pelo lado, Wardzinski "mergulha" para a deep half — cabeça embaixo do quadril dele, buscando o underhook profundo.'},
+    {n:'04',t:'<em>Detalhe único Wardzinski:</em> Ele usa a posição de "sit-up guard" (sentado ereto com 1 gancho) como transição entre butterfly, deep half e arm drag. É uma posição de leitura — ele lê o peso antes de decidir.'},
+    {n:'05',t:'<strong>Back Take característica — "Hip Bump to Back":</strong> Wardzinski usa um hip bump (empurrão de quadril) para criar espaço, depois desliza para as costas por baixo do braço. É mais sutil que o arm drag clássico.'},
+    {n:'06',t:'<strong>Leg Drag Entry:</strong> Quando adversário está em pé, Wardzinski pega a perna, draga para o lado (como um arm drag mas com a perna) e sai por trás para as costas.'},
+  ],
+  keyDetail:'O sistema Wardzinski é sobre POSIÇÃO INSIDE — quem tem os cotovelos por dentro controla o jogo. Tudo que ele faz é para conseguir e manter essa posição inside.',
+  error:'Tentar o sistema Wardzinski sem ter a butterfly clássica consolidada. Os fundamentos de Marcelo vêm primeiro — Wardzinski é uma extensão, não um substituto.',
+  backPath:'Wardzinski tem múltiplos caminhos para as costas: hip bump to back, arm drag profundo, leg drag to back, deep half to back. Todos terminam no mesmo lugar.',
+  ifthen:[
+    {if:'Adversário abre os joelhos para reagir',then:'Arm drag pelo espaço criado → COSTAS'},
+    {if:'Adversário pressiona para passar',then:'Deep half entry → underhook → costas ou sweep'},
+    {if:'Adversário tenta passar por cima',then:'Sit-up guard → lê o peso → arm drag ou elevator'},
+    {if:'Adversário em pé lateral',then:'Leg drag → sai por trás → COSTAS'},
+  ],
+  ytLinks:[
+    {title:'Adam Wardzinski — Butterfly Guard System',sub:'O sistema completo do campeão',url:'https://www.youtube.com/results?search_query=adam+wardzinski+butterfly+guard+system'},
+    {title:'Wardzinski — Inside Position and Arm Drag',sub:'O controle inside e o arm drag profundo',url:'https://www.youtube.com/results?search_query=wardzinski+inside+position+arm+drag'},
+    {title:'Wardzinski — Back Takes from Butterfly',sub:'Todas as pegadas de costas do sistema',url:'https://www.youtube.com/results?search_query=wardzinski+back+take+butterfly+guard'},
+  ],
+  trainPlan:[
+    {day:'Treino 1 — Inside Position',focus:'Conseguir e manter inside',steps:[
+      {n:'1',t:'<strong>Drill (10 min):</strong> Parceiro tenta colocar os braços por fora dos seus. Você mantém inside (cotovelos dentro). Só isso.'},
+      {n:'2',t:'<strong>Round (3x3min):</strong> Jogo normal de butterfly. ÚNICO objetivo: manter inside position. Toda vez que perder, reconecta.'},
+    ]},
+    {day:'Treino 2 — Hip Bump to Back',focus:'A pegada de costas característica',steps:[
+      {n:'1',t:'<strong>Drill cooperativo:</strong> 20x hip bump + deslize para costas. Foco: o hip bump cria o espaço, o deslize acontece DURANTE o bump, não depois.'},
+      {n:'2',t:'<strong>Rounds:</strong> Aplica em jogo normal. Anota quantas vezes você conseguiu criar espaço com o hip bump e usar para as costas.'},
+    ]},
+  ],
+  criteria:{minRate:35,minAttempts:10,checks:[
+    'Apliquei joelhos fechados com ganchos internos (posição Wardzinski) em 2+ treinos',
+    'Consegui inside position e mantive por 20+ segundos em 3+ ocasiões',
+    'Fui para as costas usando um movimento específico do sistema Wardzinski pelo menos 1x',
+    'Estudei pelo menos 1 vídeo completo de Wardzinski e implementei 1 detalhe',
+  ]},
+  sideQuests:[
+    {id:'sq_wdz_deep',name:'Deep Half Entry do Butterfly',desc:'Mergulho para deep half quando ele pressiona',steps:['Assistir Wardzinski deep half entries','Mergulhar pelo lado da pressão: cabeça embaixo','Underhook profundo → costas ou sweep do deep half']},
+    {id:'sq_wdz_leg',name:'Leg Drag to Back',desc:'Usando a perna como arm drag',steps:['Entender: leg drag é o arm drag aplicado à perna','Grip na perna: pelo tendão de aquiles ou pela coxa','Draga + sai por trás → seatbelt']},
+  ]
+},
+{
+  id:'n11',step:11,emoji:'🌊',
+  name:'Jogo Conectado — Sistema Completo',
+  tags:['síntese','sistema completo','flow','finalizador'],
+  tagTypes:['tag-sys','tag-sys','tag-key','tag-fin'],
+  context:'O objetivo final: não são técnicas separadas, é um sistema. Butterfly → arm drag → costas → RNC. OU: knee shield → dogfight → costas → RNC. OU: octopus → costas → RNC. Todos os caminhos levam ao mesmo destino.',
+  steps:[
+    {n:'01',t:'<strong>A pergunta sempre ativa:</strong> A cada momento: ele pressionou? Recuou? Neutro? Está de joelhos, em pé, agachado? Você nunca está esperando — está lendo.'},
+    {n:'02',t:'<strong>Destino único — costas e finalização:</strong> Mesmo quando você vai para sweep por cima, a pergunta é imediatamente: "ele vai me dar as costas?" Se sim, você muda para isso.'},
+    {n:'03',t:'<strong>Aceitar as transições:</strong> Perdeu a butterfly? Entra no knee shield. Perdeu o knee shield? Tenta o octopus. Perdeu a posição? Reseta para butterfly. Não existe "errado" — existe transição.'},
+    {n:'04',t:'<strong>Jogo preguiçoso e eficiente:</strong> Se você está sentindo que está usando muita força, tem um problema de timing ou posição. Frames e alavancas. Você não luta contra o adversário — você usa o movimento dele.'},
+    {n:'05',t:'<strong>O finalizador:</strong> Você chegou nas costas. Agora você NÃO SAI sem tentar. RNC → short choke → ezekiel → arm triangle. A sequência inteira antes de aceitar que perdeu a posição.'},
+    {n:'06',t:'<em>Frase de referência:</em> "Eu não decido o que fazer — eu respondo ao que ele faz. Meu jogo está treinado para cada resposta levar para as costas ou para uma finalização."'},
+  ],
+  keyDetail:'O fluxo não se ensina — aparece quando os nós anteriores estão automatizados. Este nível confirma que o sistema está funcionando como um todo.',
+  error:'Querer o fluxo antes de ter as partes automáticas. Se alguma técnica ainda precisa de pensamento consciente, volte a ela. Fluxo = automatização.',
+  backPath:'Este nível é o destino. Todos os caminhos convergiram aqui: butterfly/arm drag/costas/RNC ou knee shield/dogfight/costas/RNC ou octopus/costas/RNC.',
+  ifthen:[
+    {if:'Está usando muita força',then:'Para tudo — identifica onde o timing foi errado'},
+    {if:'Chega em posições mas não finaliza',then:'Volta para nós 3 e 4 — costas e RNC'},
+    {if:'O jogo está fluindo',then:'Este nível está sendo dominado'},
+    {if:'Adversário quebrou o padrão',then:'Identifica qual nó falhou → trabalha especificamente'},
+  ],
+  ytLinks:[
+    {title:'Marcelo Garcia — Rolling Philosophy',sub:'Como Marcelo pensa durante os rounds',url:'https://www.youtube.com/results?search_query=marcelo+garcia+rolling+philosophy+grappling'},
+    {title:'Back Take System — Connecting All Positions',sub:'Como conectar tudo para as costas',url:'https://www.youtube.com/results?search_query=back+take+system+connecting+positions+bjj'},
+    {title:'Efficient BJJ — Economy of Motion',sub:'Jogo preguiçoso e eficiente',url:'https://www.youtube.com/results?search_query=efficient+bjj+economy+motion+back+take'},
+  ],
+  trainPlan:[
+    {day:'Round Aberto — Sem Objetivo',focus:'Confiar no sistema',steps:[
+      {n:'1',t:'<strong>Regra:</strong> 1 round de 5-8 min sem nenhum objetivo pré-definido. Apenas responda ao que ele der.'},
+      {n:'2',t:'<strong>Após o round:</strong> Anote o que apareceu naturalmente. O que ainda pareceu forçado? Qual nó ainda precisa de trabalho?'},
+      {n:'3',t:'<strong>Métrica de fluxo:</strong> Em quantos momentos você não precisou pensar — apenas agiu? Esse número cresce a cada treino.'},
+    ]},
+    {day:'Review Session',focus:'Identificar gaps e voltar aos nós',steps:[
+      {n:'1',t:'<strong>Análise:</strong> Onde está seu maior gap? Chegar nas costas? Manter? Finalizar? Identifica o nó fraco.'},
+      {n:'2',t:'<strong>Treino focado:</strong> Toda a sessão naquele nó específico. 3 rounds posicionais naquela posição.'},
+    ]},
+  ],
+  criteria:{minRate:45,minAttempts:15,checks:[
+    'Usei 3+ técnicas conectadas em sequência lógica em pelo menos 1 treino',
+    'Não precisei pensar conscientemente em pelo menos 2 momentos — o movimento aconteceu',
+    'Tentei finalização em 90%+ das chegadas nas costas',
+    'Identifico automaticamente o próximo movimento baseado na reação do adversário',
+  ]},
+  sideQuests:[
+    {id:'sq_fl_review',name:'Revisão Completa do Mapa Mental',sub:'Rever todos os nós e conexões',steps:['Percorrer mentalmente: butterfly → arm drag → costas → RNC','Percorrer: knee shield → dogfight → costas → RNC','Percorrer: octopus → costas → RNC','Identificar: qual caminho ainda tem gaps?']},
+    {id:'sq_fl_sparring',name:'Sparring com Observador',desc:'Feedback externo sobre o jogo',steps:['Pedir a alguém para assistir 2 rounds','Tarefa do observador: contar quantas vezes você chegou perto das costas','Feedback: em que momentos você deixou de ir para as costas?']},
+  ]
+}
+];
+
+// ═══════════════════════════════════
+// STATE & STORAGE
+// ═══════════════════════════════════
+let pendingAdv = null;
+
+const ls = (k,d) => { try{const v=localStorage.getItem('bjjp2_'+k);return v!==null?JSON.parse(v):d}catch{return d} };
+const lss = (k,v) => { try{localStorage.setItem('bjjp2_'+k,JSON.stringify(v))}catch{} };
+
+const getState = id => ls('s_'+id,{status:'locked'});
+const setState = (id,s) => lss('s_'+id,s);
+const getSessions = id => ls('ses_'+id,[]);
+const saveSessions = (id,a) => lss('ses_'+id,a);
+const getChecks = id => ls('chk_'+id,[]);
+const saveChecks = (id,a) => lss('chk_'+id,a);
+const getSQ = id => ls('sq_'+id,{done:false,note:'',checks:[]});
+const saveSQ = (id,v) => lss('sq_'+id,v);
+const getForm = id => ls('sf_'+id,{att:0,suc:0,stars:0,res:'',par:'',note:'',blind:false});
+const saveForm = (id,v) => lss('sf_'+id,v);
+
+// ═══════════════════════════════════
+// METRICS
+// ═══════════════════════════════════
+function metrics(nid){
+  const ses=getSessions(nid);
+  if(!ses.length)return{total:0,att:0,suc:0,rate:0,avgS:0,byR:{},blind:0,rec:0};
+  const att=ses.reduce((s,x)=>s+(x.att||0),0);
+  const suc=ses.reduce((s,x)=>s+(x.suc||0),0);
+  const rate=att>0?Math.round(suc/att*100):0;
+  const avgS=Math.round(ses.reduce((s,x)=>s+(x.stars||0),0)/ses.length*10)/10;
+  const blind=ses.filter(x=>x.blind&&x.suc>0).length;
+  const l5=ses.slice(0,5);const l5a=l5.reduce((s,x)=>s+(x.att||0),0);const l5s=l5.reduce((s,x)=>s+(x.suc||0),0);
+  const rec=l5a>0?Math.round(l5s/l5a*100):0;
+  const byR={};['leve','media','maxima'].forEach(r=>{
+    const rx=ses.filter(x=>x.res===r);const ra=rx.reduce((s,x)=>s+(x.att||0),0);const rs=rx.reduce((s,x)=>s+(x.suc||0),0);
+    byR[r]={att:ra,suc:rs,rate:ra>0?Math.round(rs/ra*100):0};
+  });
+  return{total:ses.length,att,suc,rate,avgS,byR,blind,rec};
+}
+
+function evalGate(node,m,checks){
+  const r=m.rate>=node.criteria.minRate;
+  const a=m.att>=node.criteria.minAttempts;
+  const c=checks.filter(Boolean).length===node.criteria.checks.length;
+  return{rateMet:r,attMet:a,checksMet:c,canAdv:r&&a&&c,partial:(r&&a)||c};
+}
+
+// ═══════════════════════════════════
+// RENDER — OVERALL
+// ═══════════════════════════════════
+function getStatuses(){
+  const st=NODES.map(n=>getState(n.id).status);
+  // Ensure first non-mastered/done after last completed is active
+  let lastDone=-1;
+  st.forEach((s,i)=>{if(s==='mastered'||s==='done')lastDone=i;});
+  const statuses=NODES.map((n,i)=>{
+    const s=getState(n.id).status;
+    if(s==='mastered'||s==='done')return s;
+    if(i===0)return 'active';
+    const prev=st[i-1];
+    if(prev==='mastered'||prev==='done'){
+      // Check if this is the immediate next
+      let isNext=true;
+      for(let j=i+1;j<NODES.length;j++){if(st[j]==='mastered'||st[j]==='done'){isNext=false;break;}}
+      if(st.slice(0,i).every(s2=>s2==='mastered'||s2==='done'))return 'active';
+    }
+    return 'locked';
+  });
+  return statuses;
+}
+
+function renderOverall(){
+  const statuses=getStatuses();
+  const done=statuses.filter(s=>s==='mastered'||s==='done').length;
+  const pct=Math.round(done/NODES.length*100);
+  document.getElementById('ovr-pct').textContent=pct+'%';
+  document.getElementById('ovr-fill').style.width=pct+'%';
+  document.getElementById('ovr-nodes').innerHTML=statuses.map(s=>`<div class="ovr-node ${s==='mastered'||s==='done'?'done':s==='active'?'active':'locked'}"></div>`).join('');
+  const pills=document.getElementById('hdr-pills');
+  const activeIdx=statuses.findIndex(s=>s==='active');
+  pills.innerHTML=`
+    <div class="pill"><div class="pill-dot" style="background:var(--green)"></div>${done}/${NODES.length} dominados</div>
+    <div class="pill"><div class="pill-dot" style="background:var(--blue)"></div>Nível ${activeIdx>=0?NODES[activeIdx].step:'?'} ativo</div>
+    <div class="pill"><div class="pill-dot" style="background:var(--gold)"></div>${pct}% completo</div>`;
+  if(activeIdx>=0){
+    const n=NODES[activeIdx];
+    document.getElementById('fc-title').textContent=n.name;
+    document.getElementById('fc-sub').textContent=`Passo ${n.step} · ${n.tags[0]}`;
+  }
+}
+
+// ═══════════════════════════════════
+// RENDER — NODE
+// ═══════════════════════════════════
+function renderAll(){
+  renderOverall();
+  const statuses=getStatuses();
+  const path=document.getElementById('path');
+  path.innerHTML='';
+  NODES.forEach((node,i)=>path.appendChild(buildNode(node,statuses[i])));
+}
+
+function buildNode(node,status){
+  const div=document.createElement('div');
+  div.className=`node ${status}-node`;
+  div.id='nd-'+node.id;
+  const sbMap={locked:'<span class="nsbadge nsb-locked">🔒</span>',active:'<span class="nsbadge nsb-active">▶ ATIVO</span>',done:'<span class="nsbadge nsb-done">✓ OK</span>',mastered:'<span class="nsbadge nsb-mastered">★ DOM</span>'};
+  const m=metrics(node.id);
+  const dots=Array.from({length:5},(_,i)=>`<div class="ndot ${i<Math.min(Math.round(m.att/node.criteria.minAttempts*5),5)?(status==='mastered'?'g':'f'):''}"></div>`).join('');
+  const tags=node.tags.map((t,i)=>`<span class="tag ${node.tagTypes[i]}">${t}</span>`).join('');
+  div.innerHTML=`
+    <div class="nwrap">
+      <div class="nicon ${status}">${node.emoji}</div>
+      <div class="ncard ${status}">
+        <div class="nhdr" onclick="toggleNode('${node.id}')">
+          <div class="nhl">
+            <div class="nstep">PASSO ${String(node.step).padStart(2,'0')}</div>
+            <div class="nname">${node.name}</div>
+            <div class="ntags">${tags}</div>
+          </div>
+          <div class="nhr">${sbMap[status]||''}<div class="ndots">${dots}</div></div>
+        </div>
+        <div class="nbody" id="nb-${node.id}">
+          <div class="ntabs">
+            <div class="ntab active" onclick="switchTab('${node.id}','guide')">📖 Guia</div>
+            <div class="ntab" onclick="switchTab('${node.id}','train')">🏋️ Treinar</div>
+            <div class="ntab" onclick="switchTab('${node.id}','session')">📝 Registrar</div>
+            <div class="ntab" onclick="switchTab('${node.id}','metrics')">📊 Métricas</div>
+            <div class="ntab" onclick="switchTab('${node.id}','gate')">🎯 Gate</div>
+            <div class="ntab" onclick="switchTab('${node.id}','sq')">⭐ Quests</div>
+          </div>
+          <div class="ntc active" id="tc-guide-${node.id}">${buildGuide(node)}</div>
+          <div class="ntc" id="tc-train-${node.id}">${buildTrain(node)}</div>
+          <div class="ntc" id="tc-session-${node.id}">${buildSession(node)}</div>
+          <div class="ntc" id="tc-metrics-${node.id}"></div>
+          <div class="ntc" id="tc-gate-${node.id}"></div>
+          <div class="ntc" id="tc-sq-${node.id}">${buildSQ(node)}</div>
+        </div>
+      </div>
+    </div>`;
+  return div;
+}
+
+function buildGuide(node){
+  const steps=node.steps.map(s=>`<div class="gstep"><span class="gstep-n">${s.n}</span><span class="gstep-t">${s.t}</span></div>`).join('');
+  const ifthen=node.ifthen.map(r=>`<div class="ifthen"><div class="it-if">SE → <span>${r.if}</span></div><div class="it-then">ENTÃO → <span>${r.then}</span></div></div>`).join('');
+  const yts=node.ytLinks.map(y=>`<a class="yt-link" href="${y.url}" target="_blank" rel="noopener"><div class="yt-icon">▶️</div><div class="yt-body"><div class="yt-title">${y.title}</div><div class="yt-sub">${y.sub}</div></div></a>`).join('');
+  return `
+    <div class="g-context"><strong>💡 Contexto</strong>${node.context}</div>
+    <div class="sec-title">Passo a Passo Detalhado</div>
+    ${steps}
+    <div class="sec-title">Detalhe Chave</div>
+    <div class="detail-box db-green"><strong>⚙️ O que faz funcionar</strong>${node.keyDetail}</div>
+    <div class="detail-box db-red"><strong>⚠️ Erro mais comum</strong>${node.error}</div>
+    <div class="detail-box db-orange"><strong>🔙 Caminho para as Costas / Finalização</strong>${node.backPath}</div>
+    <div class="sec-title">Sistema IF/THEN</div>
+    ${ifthen}
+    <div class="sec-title">▶ Referências YouTube</div>
+    ${yts}`;
+}
+
+function buildTrain(node){
+  const days=node.trainPlan.map(d=>`
+    <div class="train-day">
+      <div class="td-header"><span class="td-day">${d.day}</span><span class="td-focus">${d.focus}</span></div>
+      <div class="td-body">
+        ${d.steps.map(s=>`<div class="td-step"><span class="td-step-n">${s.n}</span><span class="td-step-t">${s.t}</span></div>`).join('')}
+      </div>
+    </div>`).join('');
+  return `
+    <div class="detail-box db-blue"><strong>🎯 Como usar esta aba</strong>Estes são planos concretos para aplicar a técnica nos seus treinos. Leia antes do treino e volte depois para registrar.</div>
+    ${days}
+    <div class="detail-box db-purple"><strong>💡 Regra de Ouro</strong>Entre em cada treino com APENAS 1 objetivo específico deste nó. Um objetivo claro = feedback claro = evolução rápida.</div>`;
+}
+
+function buildSession(node){
+  const f=getForm(node.id);
+  const sess=getSessions(node.id);
+  const histHtml=sess.length===0?'<div style="text-align:center;color:var(--text-muted);padding:14px;font-size:12px">Nenhuma sessão registrada.</div>':
+    sess.slice(0,6).map(s=>{
+      const rate=s.att>0?Math.round(s.suc/s.att*100):0;
+      const rc=rate>=50?'var(--green)':rate>=30?'var(--gold)':'var(--red)';
+      const rl={leve:'🟢',media:'🟡',maxima:'🔴'}[s.res]||'';
+      return `<div class="she">
+        <div class="she-date">${(s.date||'').slice(5)}</div>
+        <div class="she-body">
+          <div class="she-r1">
+            <span class="she-rate" style="color:${rc}">${s.suc||0}/${s.att||0} (${rate}%)</span>
+            <span class="she-stars">${'★'.repeat(s.stars||0)}</span>
+            <span class="she-res">${rl}</span>
+            <span class="she-par">${s.par||''}</span>
+          </div>
+          ${s.blind?'<div class="she-blind">⚡ Adversário sabia — funcionou mesmo assim</div>':''}
+          ${s.note?`<div class="she-note">${s.note.slice(0,100)}${s.note.length>100?'...':''}</div>`:''}
+        </div>
+        <button class="she-del" onclick="delSes('${node.id}',${s.id})">🗑</button>
+      </div>`;
+    }).join('');
+
+  return `
+    <div class="ctrs">
+      <div class="ctr-wrap">
+        <div class="ctr-lbl">Tentativas</div>
+        <span class="ctr-val" id="cv-att-${node.id}">${f.att||0}</span>
+        <div class="ctr-btns">
+          <button class="cbtn" onclick="ctr('${node.id}','att',-1)">−</button>
+          <button class="cbtn" onclick="ctr('${node.id}','att',1)">+</button>
+        </div>
+      </div>
+      <div class="ctr-wrap">
+        <div class="ctr-lbl">Funcionou</div>
+        <span class="ctr-val red" id="cv-suc-${node.id}">${f.suc||0}</span>
+        <div class="ctr-btns">
+          <button class="cbtn" onclick="ctr('${node.id}','suc',-1)">−</button>
+          <button class="cbtn" onclick="ctr('${node.id}','suc',1)">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sf-group">
+      <span class="sf-lbl">Resistência do Parceiro</span>
+      <div class="res-btns">
+        <div class="rbtn ${f.res==='leve'?'on':''}" onclick="setRes('${node.id}','leve',this)">🟢 Leve</div>
+        <div class="rbtn ${f.res==='media'?'on':''}" onclick="setRes('${node.id}','media',this)">🟡 Média</div>
+        <div class="rbtn ${f.res==='maxima'?'on':''}" onclick="setRes('${node.id}','maxima',this)">🔴 Máxima</div>
+      </div>
+    </div>
+
+    <div class="sf-group">
+      <span class="sf-lbl">Nível do Parceiro</span>
+      <div class="partner-btns" id="pb-${node.id}">
+        ${['Menos exp.','Mesmo nível','Mais exp.'].map(p=>`<div class="pbtn ${f.par===p?'on':''}" onclick="setPar('${node.id}','${p}',this)">${p}</div>`).join('')}
+      </div>
+    </div>
+
+    <div class="sf-group">
+      <span class="sf-lbl">Sensação (1-5★)</span>
+      <div class="stars" id="stars-${node.id}">
+        ${[1,2,3,4,5].map(n=>`<button class="star ${f.stars>=n?'lit':''}" onclick="setStars('${node.id}',${n})">★</button>`).join('')}
+      </div>
+    </div>
+
+    <div class="blind-row" onclick="toggleBlind('${node.id}')">
+      <input type="checkbox" id="blind-${node.id}" ${f.blind?'checked':''} onclick="event.stopPropagation()"/>
+      <div class="blind-lbl">⚡ <strong>Adversário SABIA</strong> que eu ia tentar — funcionou mesmo assim</div>
+    </div>
+
+    <div class="sf-group">
+      <span class="sf-lbl">Observação</span>
+      <textarea id="snote-${node.id}" placeholder="O que funcionou / onde travou / detalhe para próximo treino...">${f.note||''}</textarea>
+    </div>
+
+    <button class="save-btn" onclick="saveSes('${node.id}')">💾 SALVAR SESSÃO</button>
+
+    <div class="shist-hdr">Sessões registradas</div>
+    <div id="shist-${node.id}">${histHtml}</div>`;
+}
+
+function buildMetrics(nid){
+  const m=metrics(nid);const ses=getSessions(nid);
+  const rc=m.rate>=50?'var(--green)':m.rate>=30?'var(--gold)':'var(--red)';
+  const rrc=m.rec>=50?'var(--green)':m.rec>=30?'var(--gold)':'var(--red)';
+  const today=new Date();
+  const days=[...new Set(ses.map(x=>x.date))];
+  const cal=Array.from({length:28},(_,i)=>{
+    const d=new Date(today);d.setDate(d.getDate()-27+i);
+    const k=d.toISOString().split('T')[0];
+    const has=days.includes(k);
+    const bl=ses.some(s=>s.date===k&&s.blind&&s.suc>0);
+    return `<div class="cal-cell ${bl?'blind':has?'has':''}">${d.getDate()}</div>`;
+  }).join('');
+  const trend=ses.slice(0,10).reverse().map(s=>{
+    const r=s.att>0?Math.round(s.suc/s.att*100):0;
+    const c=r>=50?'var(--green)':r>=30?'var(--gold)':'var(--red)';
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
+      <div style="height:36px;display:flex;align-items:flex-end;width:100%;justify-content:center">
+        <div style="width:70%;height:${Math.max(r*.36,2)}px;background:${c};border-radius:2px 2px 0 0"></div>
+      </div>
+      <div style="font-size:8px;color:var(--text-muted)">${r}%</div>
+    </div>`;
+  }).join('');
+  return `
+    <div class="mgrid">
+      <div class="mbox"><div class="mval" style="color:${rc}">${m.rate}%</div><div class="mlab">Taxa Geral</div></div>
+      <div class="mbox"><div class="mval" style="color:${rrc}">${m.rec}%</div><div class="mlab">Últimas 5</div></div>
+      <div class="mbox"><div class="mval">${m.att}</div><div class="mlab">Tentativas</div></div>
+      <div class="mbox"><div class="mval" style="color:var(--green)">${m.suc}</div><div class="mlab">Sucessos</div></div>
+      <div class="mbox"><div class="mval" style="color:var(--gold)">${m.avgS}★</div><div class="mlab">Sensação</div></div>
+      <div class="mbox"><div class="mval" style="color:var(--orange)">${m.blind}</div><div class="mlab">⚡ Blind</div></div>
+    </div>
+    <div class="rbar-wrap">
+      <div class="rbar-title">Taxa por Nível de Resistência</div>
+      ${['leve','media','maxima'].map(r=>{
+        const d=m.byR[r]||{rate:0};
+        const c=d.rate>=50?'var(--green)':d.rate>=30?'var(--gold)':'var(--red)';
+        return `<div class="rbar-row">
+          <span class="rbar-lbl">${{leve:'🟢 Leve',media:'🟡 Média',maxima:'🔴 Máx'}[r]}</span>
+          <div class="rbar-outer"><div class="rbar-inner" style="width:${d.rate}%;background:${c}"></div></div>
+          <span class="rbar-pct" style="color:${c}">${d.rate}%</span>
+        </div>`;}).join('')}
+    </div>
+    ${ses.length>0?`<div style="margin-bottom:10px">
+      <div class="rbar-title">Tendência</div>
+      <div style="display:flex;gap:2px;height:52px;align-items:flex-end">${trend}</div>
+    </div>`:''}
+    <div class="rbar-title">Atividade (28 dias)</div>
+    <div style="font-size:9px;color:var(--text-muted);margin-bottom:4px">🔵 sessão · 🟡 blind success</div>
+    <div class="cal-grid">${cal}</div>`;
+}
+
+function buildGate(node){
+  const m=metrics(node.id);const checks=getChecks(node.id);
+  const g=evalGate(node,m,checks);
+  const auto=[
+    {name:`Taxa ≥ ${node.criteria.minRate}%`,desc:`Mínimo ${node.criteria.minRate}% de sucesso`,met:g.rateMet,cur:`${m.rate}% (precisa ${node.criteria.minRate}%)`,cls:g.rateMet?'g':m.rate>=node.criteria.minRate*.7?'w':'r'},
+    {name:`≥ ${node.criteria.minAttempts} tentativas`,desc:`Mínimo ${node.criteria.minAttempts} tentativas registradas`,met:g.attMet,cur:`${m.att} (precisa ${node.criteria.minAttempts})`,cls:g.attMet?'g':m.att>=node.criteria.minAttempts*.7?'w':'r'}
+  ];
+  const autoH=auto.map(c=>`<div class="gcrit ${c.met?'met':'fail'}">
+    <span class="gcrit-icon">${c.met?'✅':'⏳'}</span>
+    <div class="gcrit-body"><div class="gcrit-name">${c.name}</div><div class="gcrit-desc">${c.desc}</div>
+    <div class="gcrit-cur ${c.cls}">${c.cur}</div></div></div>`).join('');
+  const manH=node.criteria.checks.map((c,i)=>`<div class="gcheck ${checks[i]?'on':''}" onclick="toggleCheck('${node.id}',${i})">
+    <input type="checkbox" ${checks[i]?'checked':''} onclick="event.stopPropagation()"/>
+    <label>${c}</label></div>`).join('');
+  let v,vc;
+  if(g.canAdv){v='🏆 PODE AVANÇAR';vc='pass';}
+  else if(g.partial){v='⚡ QUASE LÁ';vc='close';}
+  else if(m.att===0){v='⏳ REGISTRE SESSÕES';vc='pending';}
+  else{v='🔄 CONTINUE TREINANDO';vc='fail';}
+  const hint=`${!g.rateMet?`Falta ${node.criteria.minRate-m.rate}% na taxa. `:''}${!g.attMet?`Faltam ${node.criteria.minAttempts-m.att} tentativas. `:''}${!g.checksMet?`${node.criteria.checks.length-checks.filter(Boolean).length} critério(s) manual(is) pendente(s).`:''}`;
+  return `
+    <div class="sec-title">Critérios Automáticos</div>
+    ${autoH}
+    <div class="sec-title">Checklist Manual</div>
+    ${manH}
+    <div class="gate-sum">
+      <div class="gate-verdict ${vc}">${v}</div>
+      ${hint?`<div class="gate-hint">${hint}</div>`:''}
+      ${g.canAdv?`<button class="adv-btn" onclick="openAdv('${node.id}')">AVANÇAR PARA O PRÓXIMO NÍVEL →</button>`:
+        `<button class="retry-btn" onclick="goSession('${node.id}')">↺ REGISTRAR NOVA SESSÃO</button>`}
+    </div>`;
+}
+
+function buildSQ(node){
+  return node.sideQuests.map(sq=>{
+    const st=getSQ(sq.id);
+    return `<div class="sq ${st.done?'done':''}">
+      <div class="sq-hdr" onclick="toggleSQ('${sq.id}')">
+        <div class="sq-hl"><div class="sq-name">${sq.name}</div><div class="sq-sub">${sq.desc||sq.sub||''}</div></div>
+        <span class="sq-badge ${st.done?'done':''}">${st.done?'✓ Feito':'Side Quest'}</span>
+      </div>
+      <div class="sq-body" id="sqb-${sq.id}">
+        ${sq.steps.map((s,i)=>`<div class="gcheck ${st.checks&&st.checks[i]?'on':''}" onclick="toggleSQcheck('${sq.id}',${i})">
+          <input type="checkbox" ${st.checks&&st.checks[i]?'checked':''} onclick="event.stopPropagation()"/>
+          <label>${s}</label></div>`).join('')}
+        <div class="sq-note">
+          <label style="font-size:10px;color:var(--text-muted);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;display:block">Anotação</label>
+          <textarea id="sqn-${sq.id}" rows="2" placeholder="O que aprendeu...">${st.note||''}</textarea>
+        </div>
+        <button class="sq-save" onclick="saveSQnote('${sq.id}')">💾 Salvar</button>
+        <button class="sq-complete" ${st.done?'disabled':''} onclick="completeSQ('${sq.id}')">${st.done?'✓ Concluído':'★ Marcar como Concluído'}</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════
+// INTERACTIONS
+// ═══════════════════════════════════
+function toggleNode(id){
+  const b=document.getElementById('nb-'+id);
+  if(!b)return;
+  b.classList.toggle('open');
+  if(b.classList.contains('open'))refreshLiveTabs(id);
+}
+
+function switchTab(id,tab){
+  ['guide','train','session','metrics','gate','sq'].forEach(t=>{
+    const tb=document.querySelector(`#nb-${id} .ntab:nth-child(${['guide','train','session','metrics','gate','sq'].indexOf(t)+1})`);
+    const tc=document.getElementById(`tc-${t}-${id}`);
+    if(tb)tb.classList.toggle('active',t===tab);
+    if(tc)tc.classList.toggle('active',t===tab);
+  });
+  if(tab==='metrics'||tab==='gate')refreshLiveTabs(id);
+}
+
+function refreshLiveTabs(id){
+  const node=NODES.find(n=>n.id===id);if(!node)return;
+  const mt=document.getElementById(`tc-metrics-${id}`);
+  const gt=document.getElementById(`tc-gate-${id}`);
+  if(mt&&mt.classList.contains('active'))mt.innerHTML=buildMetrics(id);
+  if(gt&&gt.classList.contains('active'))gt.innerHTML=buildGate(node);
+  // Always refresh gate content when tabs are open
+  if(mt&&!mt.innerHTML)mt.innerHTML=buildMetrics(id);
+  if(gt&&!gt.innerHTML)gt.innerHTML=buildGate(node);
+}
+
+function ctr(id,field,delta){
+  const el=document.getElementById(`cv-${field}-${id}`);if(!el)return;
+  let v=parseInt(el.textContent)||0;v=Math.max(0,v+delta);el.textContent=v;
+  const f=getForm(id);f[field]=v;saveForm(id,f);
+}
+function setRes(id,v,el){
+  document.querySelectorAll(`#tc-session-${id} .rbtn`).forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');const f=getForm(id);f.res=v;saveForm(id,f);
+}
+function setPar(id,v,el){
+  document.querySelectorAll(`#pb-${id} .pbtn`).forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');const f=getForm(id);f.par=v;saveForm(id,f);
+}
+function setStars(id,n){
+  document.querySelectorAll(`#stars-${id} .star`).forEach((s,i)=>s.classList.toggle('lit',i<n));
+  const f=getForm(id);f.stars=n;saveForm(id,f);
+}
+function toggleBlind(id){
+  const cb=document.getElementById('blind-'+id);if(!cb)return;
+  const f=getForm(id);f.blind=cb.checked;saveForm(id,f);
+}
+
+function saveSes(id){
+  const f=getForm(id);
+  const att=parseInt(document.getElementById(`cv-att-${id}`)?.textContent)||0;
+  const suc=parseInt(document.getElementById(`cv-suc-${id}`)?.textContent)||0;
+  const note=document.getElementById(`snote-${id}`)?.value||'';
+  const blind=document.getElementById(`blind-${id}`)?.checked||false;
+  const ses={id:Date.now(),date:new Date().toISOString().split('T')[0],att,suc,stars:f.stars||0,res:f.res||'',par:f.par||'',note,blind};
+  const all=getSessions(id);all.unshift(ses);saveSessions(id,all);
+  saveForm(id,{att:0,suc:0,stars:0,res:'',par:'',note:'',blind:false});
+  // Reset UI
+  const ae=document.getElementById(`cv-att-${id}`),se=document.getElementById(`cv-suc-${id}`);
+  if(ae)ae.textContent='0';if(se)se.textContent='0';
+  document.querySelectorAll(`#tc-session-${id} .rbtn`).forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll(`#pb-${id} .pbtn`).forEach(b=>b.classList.remove('on'));
+  document.querySelectorAll(`#stars-${id} .star`).forEach(s=>s.classList.remove('lit'));
+  const ne=document.getElementById(`snote-${id}`);if(ne)ne.value='';
+  const be=document.getElementById(`blind-${id}`);if(be)be.checked=false;
+  // Update history
+  const hist=document.getElementById(`shist-${id}`);
+  if(hist){
+    const all2=getSessions(id);
+    hist.innerHTML=all2.slice(0,6).map(s=>{
+      const rate=s.att>0?Math.round(s.suc/s.att*100):0;
+      const rc=rate>=50?'var(--green)':rate>=30?'var(--gold)':'var(--red)';
+      const rl={leve:'🟢',media:'🟡',maxima:'🔴'}[s.res]||'';
+      return `<div class="she"><div class="she-date">${(s.date||'').slice(5)}</div>
+        <div class="she-body"><div class="she-r1"><span class="she-rate" style="color:${rc}">${s.suc||0}/${s.att||0} (${rate}%)</span>
+        <span class="she-stars">${'★'.repeat(s.stars||0)}</span><span class="she-res">${rl}</span><span class="she-par">${s.par||''}</span></div>
+        ${s.blind?'<div class="she-blind">⚡ Sabia — funcionou</div>':''}
+        ${s.note?`<div class="she-note">${s.note.slice(0,100)}</div>`:''}</div>
+        <button class="she-del" onclick="delSes('${id}',${s.id})">🗑</button></div>`;
+    }).join('');
+  }
+  showToast('✓ Sessão salva!');
+  renderOverall();
+  refreshLiveTabs(id);
+}
+
+function delSes(id,sid){
+  if(!confirm('Remover esta sessão?'))return;
+  const all=getSessions(id).filter(s=>s.id!==sid);saveSessions(id,all);
+  const hist=document.getElementById(`shist-${id}`);
+  if(hist){
+    if(!all.length){hist.innerHTML='<div style="text-align:center;color:var(--text-muted);padding:14px;font-size:12px">Nenhuma sessão.</div>';return;}
+    hist.innerHTML=all.slice(0,6).map(s=>{
+      const rate=s.att>0?Math.round(s.suc/s.att*100):0;
+      const rc=rate>=50?'var(--green)':rate>=30?'var(--gold)':'var(--red)';
+      return `<div class="she"><div class="she-date">${(s.date||'').slice(5)}</div>
+        <div class="she-body"><div class="she-r1"><span class="she-rate" style="color:${rc}">${s.suc}/${s.att} (${rate}%)</span></div>
+        ${s.note?`<div class="she-note">${s.note.slice(0,100)}</div>`:''}</div>
+        <button class="she-del" onclick="delSes('${id}',${s.id})">🗑</button></div>`;
+    }).join('');
+  }
+  renderOverall();refreshLiveTabs(id);
+}
+
+function toggleCheck(id,i){
+  const checks=getChecks(id);
+  while(checks.length<=i)checks.push(false);
+  checks[i]=!checks[i];saveChecks(id,checks);
+  const node=NODES.find(n=>n.id===id);
+  const m=metrics(id);const g=evalGate(node,m,checks);
+  const gt=document.getElementById(`tc-gate-${id}`);
+  if(gt)gt.innerHTML=buildGate(node);
+}
+
+function toggleSQ(id){const b=document.getElementById('sqb-'+id);if(b)b.classList.toggle('open');}
+function toggleSQcheck(id,i){
+  const st=getSQ(id);if(!st.checks)st.checks=[];
+  while(st.checks.length<=i)st.checks.push(false);
+  st.checks[i]=!st.checks[i];saveSQ(id,st);
+  const item=document.querySelector(`#sqb-${id} .gcheck:nth-child(${i+1})`);
+  if(item){item.classList.toggle('on',st.checks[i]);const cb=item.querySelector('input');if(cb)cb.checked=st.checks[i];}
+}
+function saveSQnote(id){
+  const st=getSQ(id);const n=document.getElementById('sqn-'+id);if(n)st.note=n.value;saveSQ(id,st);showToast('✓ Anotação salva');}
+function completeSQ(id){
+  const st=getSQ(id);const n=document.getElementById('sqn-'+id);if(n)st.note=n.value;st.done=true;saveSQ(id,st);
+  const badge=document.querySelector(`#sqb-${id}`)?.previousElementSibling?.querySelector('.sq-badge');
+  if(badge){badge.textContent='✓ Feito';badge.classList.add('done');}
+  const item=document.querySelector(`#sqb-${id}`)?.closest('.sq');if(item)item.classList.add('done');
+  const btn=document.querySelector(`#sqb-${id} .sq-complete`);if(btn){btn.textContent='✓ Concluído';btn.disabled=true;}
+  showToast('⭐ Quest concluída!');
+}
+
+function goSession(id){switchTab(id,'session');const b=document.getElementById('nb-'+id);if(b&&!b.classList.contains('open'))b.classList.add('open');}
+
+function openAdv(id){
+  pendingAdv=id;const node=NODES.find(n=>n.id===id);
+  document.getElementById('madv-txt').innerHTML=`Você atendeu todos os critérios para <strong>${node.name}</strong>. O próximo nível será desbloqueado.`;
+  document.getElementById('madv').classList.add('open');
+}
+function closeMadv(){document.getElementById('madv').classList.remove('open');pendingAdv=null;}
+function confirmAdv(){
+  if(!pendingAdv)return;
+  setState(pendingAdv,{status:'mastered'});
+  const i=NODES.findIndex(n=>n.id===pendingAdv);
+  if(i>=0&&i<NODES.length-1)setState(NODES[i+1].id,{status:'active'});
+  closeMadv();renderAll();showToast('🏆 Nível dominado! Próximo desbloqueado.');
+  setTimeout(()=>{const next=document.getElementById('nd-'+NODES[Math.min(i+1,NODES.length-1)].id);if(next)next.scrollIntoView({behavior:'smooth',block:'start'});},400);
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMadv();});
+
+// ═══════════════════════════════════
+// INIT
+// ═══════════════════════════════════
+document.addEventListener('DOMContentLoaded',()=>{
+  renderAll();
+  checkDriveCallback();
+  initDriveSync();
+  renderSyncStatus();
+});
+
+// ═══════════════════════════════════════════
+// BACKUP & SYNC SYSTEM
+// ═══════════════════════════════════════════
+
+function getAllData(){
+  const d={};
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(k&&k.startsWith('bjjp2_'))d[k]=localStorage.getItem(k);
+  }
+  d['_exported']=new Date().toISOString();
+  return d;
+}
+
+function downloadBackup(silent){
+  try{
+    const blob=new Blob([JSON.stringify(getAllData(),null,2)],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download='bjj_backup_'+new Date().toISOString().split('T')[0]+'.json';
+    a.click();URL.revokeObjectURL(url);
+    lss('last_backup',new Date().toISOString());
+    renderSyncStatus();
+    if(!silent)showToast('💾 Backup salvo!');
+  }catch(e){if(!silent)showToast('❌ Erro ao salvar backup');}
+}
+
+function importBackup(file){
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const data=JSON.parse(ev.target.result);
+      let count=0;
+      Object.entries(data).forEach(([k,v])=>{if(k.startsWith('bjjp2_')){localStorage.setItem(k,v);count++;}});
+      lss('last_import',new Date().toISOString());
+      showToast('✅ '+count+' registros importados!');
+      renderSyncStatus();
+      setTimeout(()=>renderAll(),600);
+    }catch(e){showToast('❌ Arquivo inválido');}
+  };
+  reader.readAsText(file);
+}
+
+// Drive
+let driveToken=ls('drive_token','');
+let driveFileId=ls('drive_file_id','');
+let driveSyncing=false;
+
+function initDriveSync(){
+  if(driveToken)verifyDriveToken();
+}
+
+function verifyDriveToken(){
+  fetch('https://www.googleapis.com/oauth2/v3/tokeninfo?access_token='+driveToken)
+    .then(r=>r.json())
+    .then(d=>{if(d.error){driveToken='';lss('drive_token','');}renderSyncStatus();})
+    .catch(()=>{driveToken='';lss('drive_token','');renderSyncStatus();});
+}
+
+function checkDriveCallback(){
+  const hash=window.location.hash;
+  if(!hash.includes('access_token'))return;
+  const params=new URLSearchParams(hash.slice(1));
+  const token=params.get('access_token');
+  if(token){
+    driveToken=token;lss('drive_token',token);
+    history.replaceState(null,'',window.location.pathname);
+    showToast('✅ Google Drive conectado!');
+    renderSyncStatus();
+    syncToDrive();
+  }
+}
+
+function startDriveAuth(){
+  const clientId=prompt(
+    'Para conectar o Google Drive, você precisa de um Client ID.\n\n'+
+    'COMO OBTER GRÁTIS (3 min):\n'+
+    '1. Acesse: console.cloud.google.com\n'+
+    '2. Crie projeto → APIs & Services → Library → "Google Drive API" → Ativar\n'+
+    '3. APIs & Services → Credentials → "+ Create Credentials" → OAuth 2.0 Client ID\n'+
+    '4. Application type: Web Application\n'+
+    '5. Authorized JavaScript origins: adicione o URL desta página\n'+
+    '6. Copie o "Client ID" e cole aqui\n\n'+
+    'Client ID:'
+  );
+  if(!clientId||!clientId.trim())return;
+  lss('drive_client_id',clientId.trim());
+  const redirectUri=window.location.href.split('?')[0].split('#')[0];
+  const url='https://accounts.google.com/o/oauth2/v2/auth?'+
+    'client_id='+encodeURIComponent(clientId.trim())+
+    '&redirect_uri='+encodeURIComponent(redirectUri)+
+    '&response_type=token'+
+    '&scope=https://www.googleapis.com/auth/drive.file'+
+    '&prompt=consent';
+  window.location.href=url;
+}
+
+async function syncToDrive(){
+  if(!driveToken){showToast('⚠️ Conecte o Drive primeiro');return;}
+  if(driveSyncing)return;
+  driveSyncing=true;
+  const btn=document.getElementById('btn-dsync');
+  if(btn){btn.textContent='⏳ Sincronizando...';btn.disabled=true;}
+  try{
+    const blob=new Blob([JSON.stringify(getAllData(),null,2)],{type:'application/json'});
+    let res;
+    if(driveFileId){
+      res=await fetch('https://www.googleapis.com/upload/drive/v3/files/'+driveFileId+'?uploadType=media',{
+        method:'PATCH',
+        headers:{'Authorization':'Bearer '+driveToken,'Content-Type':'application/json'},
+        body:blob
+      });
+    }else{
+      const meta={name:'bjj_path_backup.json',mimeType:'application/json'};
+      const form=new FormData();
+      form.append('metadata',new Blob([JSON.stringify(meta)],{type:'application/json'}));
+      form.append('file',blob);
+      res=await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',{
+        method:'POST',headers:{'Authorization':'Bearer '+driveToken},body:form
+      });
+    }
+    if(res.status===401){driveToken='';lss('drive_token','');showToast('⚠️ Token expirado — reconecte');renderSyncStatus();return;}
+    const json=await res.json();
+    if(json.id){driveFileId=json.id;lss('drive_file_id',json.id);}
+    lss('last_drive_sync',new Date().toISOString());
+    showToast('☁️ Salvo no Google Drive!');
+    renderSyncStatus();
+  }catch(e){showToast('❌ Erro no Drive: '+e.message);}
+  finally{
+    driveSyncing=false;
+    if(btn){btn.textContent='☁️ Sync agora';btn.disabled=false;}
+  }
+}
+
+async function restoreFromDrive(){
+  if(!driveToken){showToast('⚠️ Conecte o Drive primeiro');return;}
+  if(!driveFileId){showToast('⚠️ Nenhum arquivo encontrado');return;}
+  if(!confirm('Substituir dados locais pelos dados do Drive?'))return;
+  try{
+    const res=await fetch('https://www.googleapis.com/drive/v3/files/'+driveFileId+'?alt=media',{headers:{'Authorization':'Bearer '+driveToken}});
+    if(!res.ok)throw new Error('Arquivo não encontrado no Drive');
+    const data=await res.json();
+    let count=0;
+    Object.entries(data).forEach(([k,v])=>{if(k.startsWith('bjjp2_')){localStorage.setItem(k,v);count++;}});
+    showToast('✅ Restaurado! ('+count+' registros)');
+    lss('last_import',new Date().toISOString());
+    renderSyncStatus();
+    setTimeout(()=>renderAll(),600);
+  }catch(e){showToast('❌ Erro: '+e.message);}
+}
+
+function disconnectDrive(){
+  if(!confirm('Desconectar Google Drive?'))return;
+  driveToken='';driveFileId='';
+  lss('drive_token','');lss('drive_file_id','');
+  renderSyncStatus();refreshSyncPanel();
+  showToast('Drive desconectado');
+}
+
+function fmtDate(iso){
+  if(!iso)return 'nunca';
+  try{
+    const d=new Date(iso),now=new Date(),diff=Math.round((now-d)/60000);
+    if(diff<1)return 'agora';
+    if(diff<60)return diff+'min atrás';
+    if(diff<1440)return Math.round(diff/60)+'h atrás';
+    return d.toLocaleDateString('pt-BR');
+  }catch{return '—';}
+}
+
+function renderSyncStatus(){
+  const bar=document.getElementById('sync-status-bar');if(!bar)return;
+  const lastB=ls('last_backup','');const lastD=ls('last_drive_sync','');
+  const conn=!!driveToken;
+  bar.innerHTML=`
+    <button onclick="toggleSyncPanel()" style="display:flex;align-items:center;gap:7px;padding:7px 12px;
+      background:var(--bg2);border:1px solid var(--border);border-radius:20px;cursor:pointer;
+      font-family:'DM Sans',sans-serif;color:var(--text-dim);font-size:12px;transition:all .2s;"
+      onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'">
+      <span>${conn?'☁️':'💾'}</span>
+      <span>${conn?'Drive: '+fmtDate(lastD):'Backup: '+fmtDate(lastB)}</span>
+      <span style="font-size:9px;color:var(--text-muted)">▾</span>
+    </button>`;
+}
+
+function toggleSyncPanel(){
+  let p=document.getElementById('sync-panel');
+  if(!p){
+    p=document.createElement('div');
+    p.id='sync-panel';
+    p.style.cssText='position:fixed;bottom:0;left:0;right:0;background:var(--bg1);border-top:1px solid var(--border2);'+
+      'z-index:500;padding:20px 16px 30px;max-width:780px;margin:0 auto;border-radius:14px 14px 0 0;'+
+      'transform:translateY(100%);transition:transform .3s ease;left:50%;transform:translateX(-50%) translateY(100%);width:100%;';
+    p.innerHTML='<div id="sync-panel-body"></div>';
+    document.body.appendChild(p);
+    setTimeout(()=>{p.style.transform='translateX(-50%) translateY(0)';},10);
+  }else{
+    const isOpen=p.style.transform.includes('translateY(0)');
+    if(isOpen){p.style.transform='translateX(-50%) translateY(100%)';}
+    else{p.style.transform='translateX(-50%) translateY(0)';}
+  }
+  refreshSyncPanel();
+}
+
+function closeSyncPanel(){
+  const p=document.getElementById('sync-panel');
+  if(p)p.style.transform='translateX(-50%) translateY(100%)';
+}
+
+function refreshSyncPanel(){
+  const body=document.getElementById('sync-panel-body');if(!body)return;
+  const lastB=ls('last_backup','');const lastD=ls('last_drive_sync','');
+  const conn=!!driveToken;
+  const count=Object.keys(getAllData()).filter(k=>k.startsWith('bjjp2_')).length;
+  body.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <span style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700">💾 Backup & Sincronização</span>
+      <button onclick="closeSyncPanel()" style="background:none;border:none;color:var(--text-muted);font-size:20px;cursor:pointer;padding:0 4px">✕</button>
+    </div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">${count} registros salvos localmente</div>
+
+    <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">💾 BACKUP LOCAL (JSON)</div>
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">Último backup: <span style="color:var(--text-dim)">${fmtDate(lastB)}</span></div>
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <button onclick="downloadBackup(false)" style="flex:1;padding:10px;border-radius:7px;border:1px solid var(--green);background:var(--green-d);color:var(--green);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:700;cursor:pointer">⬇ Baixar JSON</button>
+      <button onclick="document.getElementById('imp-file').click()" style="flex:1;padding:10px;border-radius:7px;border:1px solid var(--border2);background:var(--bg3);color:var(--text-dim);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:700;cursor:pointer">⬆ Importar JSON</button>
+    </div>
+    <input type="file" id="imp-file" accept=".json" style="display:none" onchange="importBackup(this.files[0])"/>
+
+    <div style="border-top:1px solid var(--border);padding-top:14px">
+      <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">☁️ GOOGLE DRIVE (AUTOMÁTICO)</div>
+      ${conn?`
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--green)"></div>
+          <span style="font-size:12px;color:var(--green);font-weight:600">Conectado</span>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Último sync: <span style="color:var(--text-dim)">${fmtDate(lastD)}</span></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+          <button id="btn-dsync" onclick="syncToDrive()" style="flex:1;padding:10px;border-radius:7px;border:none;background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:700;cursor:pointer">☁️ Sync agora</button>
+          <button onclick="restoreFromDrive()" style="flex:1;padding:10px;border-radius:7px;border:1px solid var(--border2);background:var(--bg3);color:var(--text-dim);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:700;cursor:pointer">⬇ Restaurar</button>
+        </div>
+        <button onclick="disconnectDrive()" style="width:100%;padding:8px;border-radius:7px;border:1px solid var(--red);background:var(--red-d);color:var(--red);font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer">Desconectar Drive</button>
+      `:`
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;line-height:1.6">
+          Sincronize automaticamente entre celular e computador. Seus dados ficam salvos no seu próprio Google Drive.
+        </div>
+        <button onclick="startDriveAuth()" style="width:100%;padding:12px;border-radius:7px;border:none;background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff;font-family:'Syne',sans-serif;font-size:13px;font-weight:800;letter-spacing:1px;cursor:pointer">🔗 Conectar Google Drive</button>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:8px;text-align:center;line-height:1.6">Salva em bjj_path_backup.json no seu Drive pessoal</div>
+      `}
+    </div>`;
+}
+
+// Hook: auto-sync to Drive after session save
+const _origSaveSes=saveSes;
+saveSes=function(id){
+  _origSaveSes(id);
+  setTimeout(()=>{
+    lss('pending_backup',true);
+    if(driveToken&&!driveSyncing)syncToDrive().catch(()=>{});
+    renderSyncStatus();
+  },800);
+};
+</script>
+</body>
+</html>
